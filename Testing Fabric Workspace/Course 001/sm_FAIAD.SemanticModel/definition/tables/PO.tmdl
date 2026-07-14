@@ -1,0 +1,103 @@
+table PO
+	lineageTag: 93de6803-fb1e-4652-9e5b-24794a3cb63a
+	sourceLineageTag: [dbo].[PO]
+
+	column PurchaseOrderID
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: b2769d93-56f3-44a7-94b4-6a91e468c32a
+		sourceLineageTag: PurchaseOrderID
+		summarizeBy: count
+		sourceColumn: PurchaseOrderID
+
+		annotation SummarizationSetBy = Automatic
+
+	column OrderDate
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: date
+		lineageTag: 36f8f8c4-3e6e-4824-ac2b-e96d28cdc053
+		sourceLineageTag: OrderDate
+		summarizeBy: none
+		sourceColumn: OrderDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column ContactPersonID
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: c5bd6de9-783d-4428-8044-7d72783c549a
+		sourceLineageTag: ContactPersonID
+		summarizeBy: none
+		sourceColumn: ContactPersonID
+
+		annotation SummarizationSetBy = Automatic
+
+	column ExpectedDeliveryDate
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: date
+		lineageTag: b416b4c7-c6a9-480c-8adc-2b9c2cf2fa12
+		sourceLineageTag: ExpectedDeliveryDate
+		summarizeBy: none
+		sourceColumn: ExpectedDeliveryDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column PurchaseOrderLineID
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 05b17172-f812-4a7d-bc8f-5df7b5e8a67d
+		sourceLineageTag: PurchaseOrderLineID
+		summarizeBy: count
+		sourceColumn: PurchaseOrderLineID
+
+		annotation SummarizationSetBy = Automatic
+
+	column StockItemID
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 6e72e39d-762b-49d1-9842-bff6436396ab
+		sourceLineageTag: StockItemID
+		summarizeBy: none
+		sourceColumn: StockItemID
+
+		annotation SummarizationSetBy = Automatic
+
+	column OrderedOuters
+		dataType: double
+		sourceProviderType: decimal(34, 6)
+		lineageTag: 6589b122-aa13-4693-8ca7-5bcf3986a1f8
+		sourceLineageTag: OrderedOuters
+		summarizeBy: sum
+		sourceColumn: OrderedOuters
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ExpectedUnitPricePerOuter
+		dataType: double
+		sourceProviderType: decimal(34, 6)
+		lineageTag: 54c626ac-2284-4592-a867-0fa48877683e
+		sourceLineageTag: ExpectedUnitPricePerOuter
+		summarizeBy: sum
+		sourceColumn: ExpectedUnitPricePerOuter
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition PO = entity
+		mode: directLake
+		source
+			entityName: PO
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+
+	annotation PBI_ResultType = Table
+

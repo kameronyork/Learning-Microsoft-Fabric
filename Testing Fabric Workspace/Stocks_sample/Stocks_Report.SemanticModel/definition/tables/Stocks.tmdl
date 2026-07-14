@@ -1,0 +1,111 @@
+table Stocks
+	lineageTag: 6e7daee4-b1ab-4dc4-adc3-3d21c499f885
+
+	measure 'Daily Volatility' = max(Stocks[High])-min(Stocks[Low])
+		lineageTag: 0c95ad63-ee34-4d1d-afdc-c75099ea0197
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure BasePrice18 = CALCULATE(max(Stocks[Close]),Stocks[Date]=date(2018,1,2))
+		lineageTag: d734643d-b623-4d56-a9e3-fd4a30bb0c62
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure RelativePrice = divide((average(Stocks[Close])-[BasePrice18]),[BasePrice18])
+		formatString: 0.00%;-0.00%;0.00%
+		lineageTag: c4707649-bfc7-4fb6-8386-7b5b7f0a957f
+
+	column Date
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetimeoffset
+		lineageTag: 87734e57-fb1d-4142-9423-8cbfec991070
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column Open
+		dataType: double
+		sourceProviderType: double
+		lineageTag: ac889bcd-05dc-4039-b092-2bdd1e3ee5ab
+		summarizeBy: sum
+		sourceColumn: Open
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column High
+		dataType: double
+		sourceProviderType: double
+		lineageTag: cd5c7ce1-ed62-455e-8520-bcf3009a47b8
+		summarizeBy: sum
+		sourceColumn: High
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Low
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 3e01d42e-c3a0-4293-977c-cf6c4bee9d1d
+		summarizeBy: sum
+		sourceColumn: Low
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Close
+		dataType: double
+		sourceProviderType: double
+		lineageTag: e48f4e06-2f0f-49b7-bcaf-1af5c9cf5f20
+		summarizeBy: sum
+		sourceColumn: Close
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column AdjClose
+		dataType: double
+		sourceProviderType: double
+		lineageTag: 7c178fab-a9dd-4f8b-86af-09157d340649
+		summarizeBy: sum
+		sourceColumn: AdjClose
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Volume
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: a95b35cc-bc67-4496-bd1c-91bf308fce51
+		summarizeBy: none
+		sourceColumn: Volume
+
+		annotation SummarizationSetBy = Automatic
+
+	column Ticker
+		dataType: string
+		sourceProviderType: nvarchar(max)
+		lineageTag: f724ce4b-3882-40e6-ade6-a8c25152716a
+		summarizeBy: none
+		sourceColumn: Ticker
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Stocks = m
+		mode: directQuery
+		source =
+				let
+				    Source = AzureDataExplorer.Contents("https://trd-eka8jceun4uwy6cpxr.z9.kusto.fabric.microsoft.com", "1f76aa0f-e613-4ecc-801c-2eb9a19ff60d"),
+				    Stocks1 = Source{[Name="Stocks"]}[Data]
+				in
+				    Stocks1
+
+	annotation PBI_ResultType = Table
+

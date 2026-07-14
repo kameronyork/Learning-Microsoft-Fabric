@@ -1,0 +1,33 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "df_Dataflow",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "FactInternetSales csv": {
+      "queryId": "6d4c4c42-5d95-40f5-96a9-9016eebdd350",
+      "queryName": "FactInternetSales csv"
+    },
+    "FactInternetSales csv_DataDestination": {
+      "queryId": "92e89d73-48d1-420f-8a39-37fdfde43907",
+      "queryName": "FactInternetSales csv_DataDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"b8f2dd99-4c47-4c78-91dd-085c41105a48\",\"DatasourceId\":\"f3acb815-3c7a-4e33-becc-10acf9c088a3\"}"
+    },
+    {
+      "path": "Warehouse",
+      "kind": "Warehouse",
+      "connectionId": "{\"ClusterId\":\"b8f2dd99-4c47-4c78-91dd-085c41105a48\",\"DatasourceId\":\"a599bb35-1b4c-4b74-aacd-29a566da2665\"}"
+    }
+  ]
+}

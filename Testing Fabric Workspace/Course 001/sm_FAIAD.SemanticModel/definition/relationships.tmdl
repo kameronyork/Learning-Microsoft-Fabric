@@ -1,0 +1,42 @@
+relationship 78d46ce0-c27a-0ba9-9104-db21252ae3c4
+	fromColumn: Sales.ResellerID
+	toColumn: Reseller.ResellerID
+
+relationship 557b9a8f-597c-def3-0e85-6576e97501c2
+	fromColumn: Sales.InvoiceDate
+	toColumn: Date.Date
+
+relationship ddad5924-5cb3-c0ae-16ae-9d616b770beb
+	fromColumn: Sales.StockItemID
+	toColumn: Product.StockItemID
+
+relationship 96a80d94-2f81-7b0a-8335-876355e095e9
+	fromColumn: Sales.SalespersonPersonID
+	toColumn: People.PersonID
+
+relationship cda45a6b-8fa8-e25f-86b7-4c4548aca78f
+	crossFilteringBehavior: bothDirections
+	fromColumn: Product.SupplierID
+	toColumn: Supplier.SupplierID
+
+relationship 41f08c82-7d79-1a0e-07f2-a1164673138b
+	crossFilteringBehavior: bothDirections
+	fromColumn: Geo.CityID
+	toColumn: Reseller.PostalCityID
+
+relationship d21a24fa-19ab-09a9-6652-ce7d7f989d43
+	fromColumn: Customer.ResellerID
+	toColumn: Reseller.ResellerID
+
+relationship 10f53562-8105-7602-ff15-58f49ea5fa11
+	fromColumn: PO.OrderDate
+	toColumn: Date.Date
+
+relationship f119b40c-ea14-77af-18a8-31e82e3ac96e
+	fromColumn: PO.StockItemID
+	toColumn: Product.StockItemID
+
+relationship 5dddf6e3-b151-6fe2-e5b6-19752d5c763c
+	fromColumn: PO.ContactPersonID
+	toColumn: People.PersonID
+

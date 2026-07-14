@@ -1,0 +1,22 @@
+[StagingDefinition = [Kind = "FastCopy"]]
+section Section1;
+[DataDestinations = {[Definition = [Kind = "Reference", QueryName = "FactInternetSales csv_DataDestination", IsNewTarget = true], Settings = [Kind = "Manual", AllowCreation = true, ColumnSettings = [Mappings = {[SourceColumnName = "ProductKey", DestinationColumnName = "ProductKey"], [SourceColumnName = "OrderDateKey", DestinationColumnName = "OrderDateKey"], [SourceColumnName = "DueDateKey", DestinationColumnName = "DueDateKey"], [SourceColumnName = "ShipDateKey", DestinationColumnName = "ShipDateKey"], [SourceColumnName = "CustomerKey", DestinationColumnName = "CustomerKey"], [SourceColumnName = "PromotionKey", DestinationColumnName = "PromotionKey"], [SourceColumnName = "CurrencyKey", DestinationColumnName = "CurrencyKey"], [SourceColumnName = "SalesTerritoryKey", DestinationColumnName = "SalesTerritoryKey"], [SourceColumnName = "SalesOrderNumber", DestinationColumnName = "SalesOrderNumber"], [SourceColumnName = "SalesOrderLineNumber", DestinationColumnName = "SalesOrderLineNumber"], [SourceColumnName = "RevisionNumber", DestinationColumnName = "RevisionNumber"], [SourceColumnName = "OrderQuantity", DestinationColumnName = "OrderQuantity"], [SourceColumnName = "UnitPrice", DestinationColumnName = "UnitPrice"], [SourceColumnName = "ExtendedAmount", DestinationColumnName = "ExtendedAmount"], [SourceColumnName = "UnitPriceDiscountPct", DestinationColumnName = "UnitPriceDiscountPct"], [SourceColumnName = "DiscountAmount", DestinationColumnName = "DiscountAmount"], [SourceColumnName = "ProductStandardCost", DestinationColumnName = "ProductStandardCost"], [SourceColumnName = "TotalProductCost", DestinationColumnName = "TotalProductCost"], [SourceColumnName = "SalesAmount", DestinationColumnName = "SalesAmount"], [SourceColumnName = "TaxAmt", DestinationColumnName = "TaxAmt"], [SourceColumnName = "Freight", DestinationColumnName = "Freight"], [SourceColumnName = "CarrierTrackingNumber", DestinationColumnName = "CarrierTrackingNumber"], [SourceColumnName = "CustomerPONumber", DestinationColumnName = "CustomerPONumber"], [SourceColumnName = "OrderDate", DestinationColumnName = "OrderDate"], [SourceColumnName = "DueDate", DestinationColumnName = "DueDate"], [SourceColumnName = "ShipDate", DestinationColumnName = "ShipDate"]}], DynamicSchema = false, UpdateMethod = [Kind = "Replace"], TypeSettings = [Kind = "Table"]]]}]
+shared #"FactInternetSales csv" = let
+  Source = Lakehouse.Contents(null),
+  Navigation = Source{[workspaceId = "77b56f8d-cd4a-49ba-a22b-e0f91f558ccd"]}[Data],
+  #"Navigation 1" = Navigation{[lakehouseId = "cef33fd6-0e9c-4f13-822f-92dfd58554f6"]}[Data],
+  #"Navigation 2" = #"Navigation 1"{[Id = "Files", ItemKind = "Folder"]}[Data],
+  #"Navigation 3" = #"Navigation 2"{[Name = "FactInternetSales.csv"]}[Content],
+  #"Imported CSV" = Csv.Document(#"Navigation 3", [Delimiter = ",", Columns = 26, QuoteStyle = QuoteStyle.None]),
+  #"Promoted headers" = Table.PromoteHeaders(#"Imported CSV", [PromoteAllScalars = true]),
+  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"ProductKey", Int64.Type}, {"OrderDateKey", Int64.Type}, {"DueDateKey", Int64.Type}, {"ShipDateKey", Int64.Type}, {"CustomerKey", Int64.Type}, {"PromotionKey", Int64.Type}, {"CurrencyKey", Int64.Type}, {"SalesTerritoryKey", Int64.Type}, {"SalesOrderNumber", type text}, {"SalesOrderLineNumber", Int64.Type}, {"RevisionNumber", Int64.Type}, {"OrderQuantity", Int64.Type}, {"UnitPrice", type number}, {"ExtendedAmount", type number}, {"UnitPriceDiscountPct", Int64.Type}, {"DiscountAmount", Int64.Type}, {"ProductStandardCost", type number}, {"TotalProductCost", type number}, {"SalesAmount", type number}, {"TaxAmt", type number}, {"Freight", type number}, {"CarrierTrackingNumber", type text}, {"CustomerPONumber", type text}, {"OrderDate", type date}, {"DueDate", type date}, {"ShipDate", type date}})
+in
+  #"Changed column type";
+shared #"FactInternetSales csv_DataDestination" = let
+  Pattern = Fabric.Warehouse([CreateNavigationProperties = false, HierarchicalNavigation = true]),
+  Navigation_1 = Pattern{[workspaceId = "77b56f8d-cd4a-49ba-a22b-e0f91f558ccd"]}[Data],
+  Navigation_2 = Navigation_1{[warehouseId = "b304b9b6-0db9-48db-bc50-57cbe1abc0dd"]}[Data],
+  Navigation_3 = Navigation_2{[Schema = "dbo"]}[Data],
+  TableNavigation = Navigation_3{[Name = "FactInternetSales"]}?[Data]?
+in
+  TableNavigation;

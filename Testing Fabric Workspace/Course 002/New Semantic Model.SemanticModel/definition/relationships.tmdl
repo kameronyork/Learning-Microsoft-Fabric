@@ -1,0 +1,12 @@
+relationship 66a459ef-abf8-e56d-7de2-0dc75f389bf9
+	fromColumn: internetsales.ProductKey
+	toColumn: dim_product.ProductKey
+
+relationship 7f6bb14c-faac-43ab-2fa3-4f171bbfd78f
+	fromColumn: internetsales.OrderDate
+	toColumn: dim_date.FullDateAlternateKey
+
+relationship fc94fc00-faac-8ac1-575e-d4dfd301aede
+	fromColumn: internetsales.CustomerKey
+	toColumn: dim_customer.CustomerKey
+

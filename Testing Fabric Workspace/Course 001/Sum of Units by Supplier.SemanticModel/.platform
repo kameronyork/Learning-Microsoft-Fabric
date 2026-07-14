@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "Sum of Units by Supplier"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "b9208c26-5c27-a435-4623-ac8542f5021c"
+  }
+}

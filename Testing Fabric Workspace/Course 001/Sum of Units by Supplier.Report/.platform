@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "Sum of Units by Supplier"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "d6705785-ed8b-9c47-499e-bcbfc835e92c"
+  }
+}

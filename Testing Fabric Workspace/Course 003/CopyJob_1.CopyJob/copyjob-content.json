@@ -1,0 +1,303 @@
+{
+  "properties": {
+    "jobMode": "Batch",
+    "source": {
+      "type": "DelimitedText",
+      "connectionSettings": {
+        "type": "Lakehouse",
+        "typeProperties": {
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "artifactId": "d58554f6-92df-822f-4f13-0e9ccef33fd6",
+          "rootFolder": "Files"
+        }
+      }
+    },
+    "destination": {
+      "type": "DataWarehouseTable",
+      "connectionSettings": {
+        "type": "DataWarehouse",
+        "typeProperties": {
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "artifactId": "e1abc0dd-57cb-bc50-48db-0db9b304b9b6",
+          "endPoint": "yolhti2whdpe5gasjo6rpccimi-rvx3k52kzw5etirl4d4r6vmmzu.datawarehouse.fabric.microsoft.com"
+        }
+      }
+    },
+    "policy": {
+      "timeout": "0.12:00:00",
+      "retry": 0
+    }
+  },
+  "activities": [
+    {
+      "id": "d5f25826-fe67-457f-8bfb-45418488e452",
+      "properties": {
+        "source": {
+          "datasetSettings": {
+            "location": {
+              "type": "LakehouseLocation",
+              "fileName": "DimDate.csv"
+            },
+            "columnDelimiter": ",",
+            "escapeChar": "\\",
+            "firstRowAsHeader": true,
+            "quoteChar": "\""
+          },
+          "storeSettings": {
+            "recursive": true,
+            "enablePartitionDiscovery": false
+          },
+          "formatSettings": {}
+        },
+        "destination": {
+          "tableOption": "autoCreate",
+          "writeBehavior": "Append",
+          "datasetSettings": {
+            "schema": "dbo",
+            "table": "DimDate"
+          }
+        },
+        "enableStaging": true,
+        "translator": {
+          "type": "TabularTranslator",
+          "mappings": [
+            {
+              "source": {
+                "name": "DateKey",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "DateKey",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "FullDateAlternateKey",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "FullDateAlternateKey",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "DayNumberOfWeek",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "DayNumberOfWeek",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "EnglishDayNameOfWeek",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "EnglishDayNameOfWeek",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "SpanishDayNameOfWeek",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "SpanishDayNameOfWeek",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "FrenchDayNameOfWeek",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "FrenchDayNameOfWeek",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "DayNumberOfMonth",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "DayNumberOfMonth",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "DayNumberOfYear",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "DayNumberOfYear",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "WeekNumberOfYear",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "WeekNumberOfYear",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "EnglishMonthName",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "EnglishMonthName",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "SpanishMonthName",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "SpanishMonthName",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "FrenchMonthName",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "FrenchMonthName",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "MonthNumberOfYear",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "MonthNumberOfYear",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "CalendarQuarter",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "CalendarQuarter",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "CalendarYear",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "CalendarYear",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "CalendarSemester",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "CalendarSemester",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "FiscalQuarter",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "FiscalQuarter",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "FiscalYear",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "FiscalYear",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            },
+            {
+              "source": {
+                "name": "FiscalSemester",
+                "type": "String",
+                "physicalType": "String"
+              },
+              "destination": {
+                "name": "FiscalSemester",
+                "physicalType": "varchar",
+                "length": "8000"
+              }
+            }
+          ]
+        },
+        "typeConversionSettings": {
+          "typeConversion": {
+            "allowDataTruncation": true,
+            "treatBooleanAsNumber": false
+          }
+        }
+      }
+    }
+  ]
+}

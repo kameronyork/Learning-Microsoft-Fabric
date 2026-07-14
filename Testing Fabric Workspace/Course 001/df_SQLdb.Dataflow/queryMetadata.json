@@ -1,0 +1,45 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "df_SQLdb",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "Customer": {
+      "queryId": "9169a037-9d59-4f6b-9d9f-8272c288a5f7",
+      "queryName": "Customer",
+      "loadEnabled": false
+    },
+    "People": {
+      "queryId": "36099602-ab67-4455-95bb-2fc9898d06c3",
+      "queryName": "People",
+      "loadEnabled": false
+    },
+    "Customer_DataDestination": {
+      "queryId": "f9b27a13-f942-4392-b7a6-15d7f84284bc",
+      "queryName": "Customer_DataDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    },
+    "People_DataDestination": {
+      "queryId": "b66a6021-ea8c-45e5-97ae-bc55f0a3fa07",
+      "queryName": "People_DataDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "faiad-pw.database.windows.net;FAIAD-ODL",
+      "kind": "SQL",
+      "connectionId": "{\"ClusterId\":\"b8f2dd99-4c47-4c78-91dd-085c41105a48\",\"DatasourceId\":\"f7666346-6527-43f1-bc5a-c931d559643b\"}"
+    },
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"b8f2dd99-4c47-4c78-91dd-085c41105a48\",\"DatasourceId\":\"f3acb815-3c7a-4e33-becc-10acf9c088a3\"}"
+    }
+  ]
+}

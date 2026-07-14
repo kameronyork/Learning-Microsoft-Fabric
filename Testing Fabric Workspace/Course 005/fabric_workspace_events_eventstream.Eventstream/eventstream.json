@@ -1,0 +1,27 @@
+{
+  "sources": [
+    {
+      "id": "faac2fcd-4d8d-47d2-9e29-d213471f45ae",
+      "name": "fabric-workspace-events",
+      "type": "FabricWorkspaceItemEvents",
+      "properties": {
+        "eventScope": "Workspace",
+        "workspaceId": "77b56f8d-cd4a-49ba-a22b-e0f91f558ccd",
+        "includedEventTypes": [],
+        "filters": []
+      }
+    }
+  ],
+  "destinations": [],
+  "streams": [
+    {
+      "id": "cbeca07d-2d53-4cd0-b693-319fdf29b102",
+      "name": "fabric_workspace_events_eventstream-stream",
+      "type": "DefaultStream",
+      "properties": {},
+      "inputNodes": []
+    }
+  ],
+  "operators": [],
+  "compatibilityLevel": "1.1"
+}

@@ -1,0 +1,123 @@
+table Product
+	lineageTag: c800db46-23d8-4900-b220-4426f5483dfd
+	sourceLineageTag: [dbo].[Product]
+
+	column StockItemID
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 2032b1f6-4ce7-47a0-b95e-d23b9e85ac5e
+		sourceLineageTag: StockItemID
+		summarizeBy: none
+		sourceColumn: StockItemID
+
+		annotation SummarizationSetBy = Automatic
+
+	column StockItemName
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 113b370b-e4f6-46b6-8d9d-0703dd28c8c1
+		sourceLineageTag: StockItemName
+		summarizeBy: none
+		sourceColumn: StockItemName
+
+		annotation SummarizationSetBy = Automatic
+
+	column SupplierID
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 900f2e90-e389-49e9-a7ad-fc619ed35b18
+		sourceLineageTag: SupplierID
+		summarizeBy: none
+		sourceColumn: SupplierID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Size
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: a15ead2c-69d5-42b4-96b1-5f3ef97f0bc9
+		sourceLineageTag: Size
+		summarizeBy: none
+		sourceColumn: Size
+
+		annotation SummarizationSetBy = Automatic
+
+	column IsChillerStock
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: e0441728-4ea4-4a54-a69d-33d441591789
+		sourceLineageTag: IsChillerStock
+		summarizeBy: none
+		sourceColumn: IsChillerStock
+
+		annotation SummarizationSetBy = Automatic
+
+	column TaxRate
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: acfc7182-286d-44c2-9152-be9ca8b0b530
+		sourceLineageTag: TaxRate
+		summarizeBy: sum
+		sourceColumn: TaxRate
+
+		annotation SummarizationSetBy = Automatic
+
+	column UnitPrice
+		dataType: double
+		sourceProviderType: float
+		lineageTag: 80f614c5-c84f-42f8-8791-5ab395944e2e
+		sourceLineageTag: UnitPrice
+		summarizeBy: sum
+		sourceColumn: UnitPrice
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column RecommendedRetailPrice
+		dataType: double
+		sourceProviderType: float
+		lineageTag: aa53df0c-ce68-4b3e-b671-0f99580225d1
+		sourceLineageTag: RecommendedRetailPrice
+		summarizeBy: sum
+		sourceColumn: RecommendedRetailPrice
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column TypicalWeightPerUnit
+		dataType: double
+		sourceProviderType: float
+		lineageTag: 9394f6b5-881c-4b7f-8782-5cb33c83a7f5
+		sourceLineageTag: TypicalWeightPerUnit
+		summarizeBy: sum
+		sourceColumn: TypicalWeightPerUnit
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column StockGroupName
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: ed534292-cf7f-4fa5-bd52-244edb87a5fd
+		sourceLineageTag: StockGroupName
+		summarizeBy: none
+		sourceColumn: StockGroupName
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Product = entity
+		mode: directLake
+		source
+			entityName: Product
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+
+	annotation PBI_ResultType = Table
+

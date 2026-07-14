@@ -1,0 +1,38 @@
+table 'SQL query 1'
+	lineageTag: 3e7cacc5-7b97-4669-9b3a-8c888736820b
+
+	column SupplierName
+		dataType: string
+		lineageTag: 02d591f1-2fd7-47a9-aed4-ee4068a3c363
+		summarizeBy: none
+		sourceColumn: SupplierName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Units
+		dataType: int64
+		formatString: 0
+		lineageTag: 75318046-2708-4b9f-82c2-9a17838037c2
+		summarizeBy: sum
+		sourceColumn: Units
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'SQL query 1' = m
+		mode: directQuery
+		source =
+				let
+				    sqlNativeQuery = Value.NativeQuery(Sql.Database("yolhti2whdpe5gasjo6rpccimi-rvx3k52kzw5etirl4d4r6vmmzu.datawarehouse.fabric.microsoft.com", "lk_FAIAD"),  "SELECT
+				    su.SupplierName,
+				    SUM (Quantity) AS Units
+				FROM dbo.Sales s
+				    JOIN dbo.Product p
+				        ON p.StockItemID = s.StockItemID
+				    JOIN dbo.Supplier su
+				        ON su.SupplierID = p.SupplierID
+				GROUP BY su.SupplierName")
+				in
+				    sqlNativeQuery
+
+	annotation PBI_ResultType = Table
+

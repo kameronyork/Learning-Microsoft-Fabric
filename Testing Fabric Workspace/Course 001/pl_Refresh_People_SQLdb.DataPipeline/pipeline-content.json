@@ -1,0 +1,174 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "RefreshDataflow",
+        "typeProperties": {
+          "dataflowId": "0a9773d0-5202-9b6c-4315-9817bb38a521",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "notifyOption": "NoNotification",
+          "dataflowType": "DataflowFabric",
+          "executeMashupQueriesOnly": true
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "Dataflow1",
+        "dependsOn": []
+      },
+      {
+        "type": "Until",
+        "typeProperties": {
+          "expression": {
+            "value": "@or(\r\n    equals(\r\n        variables('varCounter'), \r\n        3\r\n    ), \r\n    equals(\r\n        variables('varIsSuccess'),\r\n        variables('varSuccess')\r\n    )\r\n)",
+            "type": "Expression"
+          },
+          "timeout": "0.12:00:00",
+          "activities": [
+            {
+              "type": "RefreshDataflow",
+              "typeProperties": {
+                "dataflowId": "0a9773d0-5202-9b6c-4315-9817bb38a521",
+                "workspaceId": "00000000-0000-0000-0000-000000000000",
+                "notifyOption": "NoNotification",
+                "dataflowType": "DataflowFabric",
+                "executeMashupQueriesOnly": true
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "refresh df_SQLdb",
+              "dependsOn": []
+            },
+            {
+              "type": "SetVariable",
+              "typeProperties": {
+                "variableName": "varIsSuccess",
+                "value": {
+                  "value": "@variables('varSuccess')",
+                  "type": "Expression"
+                }
+              },
+              "policy": {
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "set varIsSuccess",
+              "dependsOn": [
+                {
+                  "activity": "refresh df_SQLdb",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "SetVariable",
+              "typeProperties": {
+                "variableName": "varTempCounter",
+                "value": {
+                  "value": "@add(variables('varCounter'), 1)",
+                  "type": "Expression"
+                }
+              },
+              "policy": {
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "set varTempCounter",
+              "dependsOn": [
+                {
+                  "activity": "refresh df_SQLdb",
+                  "dependencyConditions": [
+                    "Failed"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "SetVariable",
+              "typeProperties": {
+                "variableName": "varCounter",
+                "value": {
+                  "value": "@add(variables('varTempCounter'), 1)",
+                  "type": "Expression"
+                }
+              },
+              "policy": {
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "set varCounter",
+              "dependsOn": [
+                {
+                  "activity": "set varTempCounter",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "Wait",
+              "typeProperties": {
+                "waitTimeInSeconds": {
+                  "value": "@if(\n    greater(variables('varCounter'), 1),\n    if(equals(variables('varCounter'), 2),\n        mul(variables('varWaitTime'), 15), \n        mul(variables('varWaitTime'), 0)\n    ),\n    mul(variables('varWaitTime'), 5)\n)\n",
+                  "type": "Expression"
+                }
+              },
+              "name": "Wait1",
+              "dependsOn": [
+                {
+                  "activity": "set varCounter",
+                  "dependencyConditions": [
+                    "Succeeded"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "name": "Until1",
+        "dependsOn": [
+          {
+            "activity": "Dataflow1",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      }
+    ],
+    "variables": {
+      "varCounter": {
+        "type": "Integer",
+        "defaultValue": 0
+      },
+      "varTempCounter": {
+        "type": "Integer",
+        "defaultValue": 0
+      },
+      "varIsSuccess": {
+        "type": "String",
+        "defaultValue": "No"
+      },
+      "varSuccess": {
+        "type": "String",
+        "defaultValue": "Yes"
+      },
+      "varWaitTime": {
+        "type": "Integer",
+        "defaultValue": 60
+      }
+    }
+  }
+}

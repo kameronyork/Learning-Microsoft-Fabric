@@ -1,0 +1,231 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
+  "name": "4714bf526bf900cc8d8d",
+  "displayName": "Page 1",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "autoPageGenerationConfig": {
+    "selectedFields": [
+      {
+        "Column": {
+          "Expression": {
+            "SourceRef": {
+              "Entity": "Product"
+            }
+          },
+          "Property": "StockGroupName"
+        }
+      },
+      {
+        "Measure": {
+          "Expression": {
+            "SourceRef": {
+              "Entity": "Sales"
+            }
+          },
+          "Property": "Units"
+        }
+      }
+    ],
+    "visualContainerConfigurations": [
+      {
+        "name": "f4533f9af10573d407e5",
+        "fields": [
+          {
+            "Column": {
+              "Expression": {
+                "SourceRef": {
+                  "Entity": "Product"
+                }
+              },
+              "Property": "StockGroupName"
+            }
+          },
+          {
+            "Measure": {
+              "Expression": {
+                "SourceRef": {
+                  "Entity": "Sales"
+                }
+              },
+              "Property": "Units"
+            }
+          }
+        ]
+      },
+      {
+        "name": "dae484a70d4b3711f7bc",
+        "fields": [
+          {
+            "Column": {
+              "Expression": {
+                "SourceRef": {
+                  "Entity": "Product"
+                }
+              },
+              "Property": "StockGroupName"
+            }
+          },
+          {
+            "Measure": {
+              "Expression": {
+                "SourceRef": {
+                  "Entity": "Sales"
+                }
+              },
+              "Property": "Sales"
+            }
+          }
+        ]
+      },
+      {
+        "name": "78537b65db6be7be38a7",
+        "fields": [
+          {
+            "Column": {
+              "Expression": {
+                "SourceRef": {
+                  "Entity": "Product"
+                }
+              },
+              "Property": "StockGroupName"
+            }
+          },
+          {
+            "Measure": {
+              "Expression": {
+                "SourceRef": {
+                  "Entity": "Sales"
+                }
+              },
+              "Property": "Average Order"
+            }
+          }
+        ]
+      },
+      {
+        "name": "8e11bc111ec648f90b38",
+        "fields": [
+          {
+            "Column": {
+              "Expression": {
+                "SourceRef": {
+                  "Entity": "Product"
+                }
+              },
+              "Property": "StockGroupName"
+            }
+          },
+          {
+            "Measure": {
+              "Expression": {
+                "SourceRef": {
+                  "Entity": "Sales"
+                }
+              },
+              "Property": "Sales Orders"
+            }
+          }
+        ]
+      },
+      {
+        "name": "a1d7bca6c68438af6d65",
+        "fields": []
+      },
+      {
+        "name": "e5f8f0b933bd0a4a75a9",
+        "fields": []
+      },
+      {
+        "name": "fe0c16c0fd659770af8d",
+        "fields": []
+      },
+      {
+        "name": "0a822ff8eac54f36116c",
+        "fields": []
+      },
+      {
+        "name": "abb4ff657348e50c7ce8",
+        "fields": []
+      },
+      {
+        "name": "59141e3dd5d9f806c806",
+        "fields": []
+      },
+      {
+        "name": "e281a507b46e3ae67161",
+        "fields": []
+      },
+      {
+        "name": "91f2dfcfeee6722d4b65",
+        "fields": [
+          {
+            "Measure": {
+              "Expression": {
+                "SourceRef": {
+                  "Entity": "Sales"
+                }
+              },
+              "Property": "Units"
+            }
+          }
+        ]
+      },
+      {
+        "name": "3f6760b7a008de2b1736",
+        "fields": [
+          {
+            "Measure": {
+              "Expression": {
+                "SourceRef": {
+                  "Entity": "Sales"
+                }
+              },
+              "Property": "Sales"
+            }
+          }
+        ]
+      },
+      {
+        "name": "16364aba6a0f0859d218",
+        "fields": [
+          {
+            "Measure": {
+              "Expression": {
+                "SourceRef": {
+                  "Entity": "Sales"
+                }
+              },
+              "Property": "Average Order"
+            }
+          }
+        ]
+      },
+      {
+        "name": "732c0f5bb70f0f0662c7",
+        "fields": [
+          {
+            "Measure": {
+              "Expression": {
+                "SourceRef": {
+                  "Entity": "Sales"
+                }
+              },
+              "Property": "Sales Orders"
+            }
+          }
+        ]
+      },
+      {
+        "name": "e2aa89bb6f7f8e6f73e8",
+        "fields": []
+      }
+    ],
+    "layout": {
+      "related": {
+        "version": 1
+      }
+    }
+  }
+}

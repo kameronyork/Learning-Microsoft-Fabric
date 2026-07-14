@@ -1,0 +1,147 @@
+table Reseller
+	lineageTag: 3e52f189-5de1-4eda-aeee-bc2ca0023fce
+	sourceLineageTag: [dbo].[Reseller]
+
+	column ResellerID
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: b815a863-d9c0-4edc-8be4-634563cd144c
+		sourceLineageTag: ResellerID
+		summarizeBy: none
+		sourceColumn: ResellerID
+
+		annotation SummarizationSetBy = Automatic
+
+	column ResellerName
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: f321b8d0-cf6f-4052-ac86-eb2481c89471
+		sourceLineageTag: ResellerName
+		summarizeBy: none
+		sourceColumn: ResellerName
+
+		annotation SummarizationSetBy = Automatic
+
+	column PostalCityID
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: ea6473e8-caea-421a-a238-c753c5a82dec
+		sourceLineageTag: PostalCityID
+		summarizeBy: none
+		sourceColumn: PostalCityID
+
+		annotation SummarizationSetBy = Automatic
+
+	column PhoneNumber
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 4bab76ff-1839-4537-99b0-0941000967f9
+		sourceLineageTag: PhoneNumber
+		summarizeBy: none
+		sourceColumn: PhoneNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column FaxNumber
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 17da9c51-7fcf-4a7d-890f-f88b40713e06
+		sourceLineageTag: FaxNumber
+		summarizeBy: none
+		sourceColumn: FaxNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column WebsiteURL
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: d56793a9-8392-490e-8d1c-70fe6226475d
+		sourceLineageTag: WebsiteURL
+		summarizeBy: none
+		sourceColumn: WebsiteURL
+
+		annotation SummarizationSetBy = Automatic
+
+	column DeliveryAddressLine1
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 3a148e43-aad4-42be-9809-3e11f7ec826a
+		sourceLineageTag: DeliveryAddressLine1
+		summarizeBy: none
+		sourceColumn: DeliveryAddressLine1
+
+		annotation SummarizationSetBy = Automatic
+
+	column DeliveryAddressLine2
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 50618eb1-98dc-434b-ac14-7712ac95e2be
+		sourceLineageTag: DeliveryAddressLine2
+		summarizeBy: none
+		sourceColumn: DeliveryAddressLine2
+
+		annotation SummarizationSetBy = Automatic
+
+	column DeliveryPostalCode
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 8056b7b2-801d-4091-89a1-54a11708597b
+		sourceLineageTag: DeliveryPostalCode
+		summarizeBy: count
+		sourceColumn: DeliveryPostalCode
+
+		annotation SummarizationSetBy = Automatic
+
+	column PostalAddressLine1
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 257f93a1-6325-4158-b0a7-3085e21644d3
+		sourceLineageTag: PostalAddressLine1
+		summarizeBy: none
+		sourceColumn: PostalAddressLine1
+
+		annotation SummarizationSetBy = Automatic
+
+	column PostalAddressLine2
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: eb7952c8-ae0c-4d2c-bf94-64449eac6c61
+		sourceLineageTag: PostalAddressLine2
+		summarizeBy: none
+		sourceColumn: PostalAddressLine2
+
+		annotation SummarizationSetBy = Automatic
+
+	column PostalPostalCode
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 25af3283-c568-4cb9-9a07-55c49a72a4d2
+		sourceLineageTag: PostalPostalCode
+		summarizeBy: count
+		sourceColumn: PostalPostalCode
+
+		annotation SummarizationSetBy = Automatic
+
+	column ResellerCompany
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 36ee9043-e355-4cff-bda8-de9aff227b52
+		sourceLineageTag: ResellerCompany
+		summarizeBy: none
+		sourceColumn: ResellerCompany
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Reseller = entity
+		mode: directLake
+		source
+			entityName: Reseller
+			schemaName: dbo
+			expressionSource: DatabaseQuery
+
+	annotation PBI_ResultType = Table
+

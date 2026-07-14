@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Reflex",
+    "displayName": "My Power BI Activator Alerts",
+    "description": "Reflex Trigger"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "dc5a8899-0bfa-bb18-4da7-5671501dd704"
+  }
+}

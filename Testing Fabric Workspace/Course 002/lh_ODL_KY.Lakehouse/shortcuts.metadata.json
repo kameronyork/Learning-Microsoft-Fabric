@@ -1,0 +1,14 @@
+[
+  {
+    "name": "dim_customer",
+    "path": "/Tables/dbo",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "7aaa0f2d-ff0e-4367-b6d3-e059fdfd1a15",
+        "location": "https://fabricodlrg.dfs.core.windows.net",
+        "subpath": "/lakehouse-odl/Delta"
+      }
+    }
+  }
+]

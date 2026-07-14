@@ -1,0 +1,837 @@
+{
+  "schema_version": 75,
+  "autoRefresh": {
+    "enabled": true,
+    "defaultInterval": "1m"
+  },
+  "changeDetection": {
+    "kind": "liveUpdates",
+    "minRefreshRate": "10s",
+    "fallbackRefreshRate": "1m"
+  },
+  "tiles": [
+    {
+      "queryRef": {
+        "kind": "query",
+        "queryId": "d5d0b92c-8f48-4eb0-b1e4-0afbb3cbe74a"
+      },
+      "id": "7d8edacf-fa2a-4ed3-9e9d-08cdb5f99288",
+      "title": "Stocks Summary",
+      "visualType": "table",
+      "pageId": "16ed4db5-138c-451a-b03a-0a3d1dec941a",
+      "layout": {
+        "x": 0,
+        "y": 10,
+        "width": 10,
+        "height": 10
+      },
+      "description": "This dashboard provides a summary of the maximum high, minimum low, average open, and average close for each stock ticker.",
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "crossFilter": [],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": []
+      }
+    },
+    {
+      "queryRef": {
+        "kind": "query",
+        "queryId": "62e96c91-4a85-462d-bd4a-80326d7ac98e"
+      },
+      "id": "35f6aeb9-9424-4740-80a6-6ab32707929c",
+      "title": "Top 10 Stocks by Volume",
+      "visualType": "column",
+      "pageId": "16ed4db5-138c-451a-b03a-0a3d1dec941a",
+      "layout": {
+        "x": 10,
+        "y": 10,
+        "width": 10,
+        "height": 10
+      },
+      "description": "This dashboard shows the top 10 stocks by trading volume.",
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "crossFilter": [],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": [],
+        "selectedDataOnLoad": {
+          "all": true,
+          "limit": 10
+        },
+        "dataPointsTooltip": {
+          "all": false,
+          "limit": 1
+        }
+      }
+    },
+    {
+      "queryRef": {
+        "kind": "query",
+        "queryId": "d4399cfe-d0ce-40c2-bec8-7d149583a533"
+      },
+      "id": "bc248667-e3a1-42ed-8490-290a638656b8",
+      "title": "Top 10 Stocks by Average Price",
+      "visualType": "column",
+      "pageId": "16ed4db5-138c-451a-b03a-0a3d1dec941a",
+      "layout": {
+        "x": 0,
+        "y": 20,
+        "width": 10,
+        "height": 10
+      },
+      "description": "This dashboard shows the top 10 stocks by average trading volume.",
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "multipleYAxes": {
+          "base": {
+            "id": "-1",
+            "label": "",
+            "columns": [],
+            "yAxisMaximumValue": null,
+            "yAxisMinimumValue": null,
+            "yAxisScale": "linear",
+            "horizontalLines": []
+          },
+          "additional": [],
+          "showMultiplePanels": false
+        },
+        "hideLegend": false,
+        "legendLocation": "bottom",
+        "xColumnTitle": "",
+        "xColumn": "Ticker",
+        "yColumns": [
+          "avgPrice"
+        ],
+        "seriesColumns": null,
+        "xAxisScale": "linear",
+        "verticalLine": "",
+        "crossFilter": [],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": [],
+        "selectedDataOnLoad": {
+          "all": true,
+          "limit": 10
+        },
+        "dataPointsTooltip": {
+          "all": false,
+          "limit": 1
+        }
+      }
+    },
+    {
+      "queryRef": {
+        "kind": "query",
+        "queryId": "18313dee-bbc7-41c3-9635-85b2adf97183"
+      },
+      "id": "5ea46a88-b94d-4e23-887d-a58e109e2b3c",
+      "title": "MSFT Closing Prices Over Time",
+      "visualType": "line",
+      "pageId": "16ed4db5-138c-451a-b03a-0a3d1dec941a",
+      "layout": {
+        "x": 10,
+        "y": 20,
+        "width": 10,
+        "height": 10
+      },
+      "description": "This dashboard shows the closing prices of AAPL over time.",
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "multipleYAxes": {
+          "base": {
+            "id": "-1",
+            "label": "",
+            "columns": [],
+            "yAxisMaximumValue": null,
+            "yAxisMinimumValue": null,
+            "yAxisScale": "linear",
+            "horizontalLines": []
+          },
+          "additional": [],
+          "showMultiplePanels": false
+        },
+        "hideLegend": false,
+        "legendLocation": "bottom",
+        "xColumnTitle": "",
+        "xColumn": null,
+        "yColumns": null,
+        "seriesColumns": null,
+        "xAxisScale": "linear",
+        "verticalLine": "",
+        "crossFilter": [],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": [],
+        "selectedDataOnLoad": {
+          "all": true,
+          "limit": 10
+        },
+        "dataPointsTooltip": {
+          "all": false,
+          "limit": 1
+        }
+      }
+    },
+    {
+      "queryRef": {
+        "kind": "query",
+        "queryId": "1eed0159-19f0-4401-a6df-c6e81327623e"
+      },
+      "id": "1fd4aa19-6879-4fbb-8663-e5455ccbc641",
+      "title": "Rows Histogram",
+      "visualType": "area",
+      "pageId": "3939e30a-e873-4739-9bd2-db3051b973a1",
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 23,
+        "height": 5
+      },
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "crossFilter": [],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": [],
+        "selectedDataOnLoad": {
+          "all": true,
+          "limit": 10
+        },
+        "dataPointsTooltip": {
+          "all": false,
+          "limit": 1
+        }
+      }
+    },
+    {
+      "queryRef": {
+        "kind": "query",
+        "queryId": "dc9e2dc2-a830-4226-a952-6fee2fc9702e"
+      },
+      "id": "7e9d3771-ccc7-42cb-b0a3-4e8570e2b4a0",
+      "title": "Schema",
+      "visualType": "table",
+      "pageId": "3939e30a-e873-4739-9bd2-db3051b973a1",
+      "layout": {
+        "x": 0,
+        "y": 16,
+        "width": 5,
+        "height": 10
+      },
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "crossFilter": [
+          {
+            "interaction": "column",
+            "property": "ColumnName",
+            "parameterId": "3b8ce65e-3b6a-494a-a7d2-19fe73f02c1c",
+            "disabled": false
+          }
+        ],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": []
+      }
+    },
+    {
+      "queryRef": {
+        "kind": "query",
+        "queryId": "e8588059-cec1-4e5d-a4f6-a6e0e3c98c16"
+      },
+      "id": "a78decf6-075c-41d6-9dc3-e783db925c2b",
+      "title": "Sample",
+      "visualType": "table",
+      "pageId": "3939e30a-e873-4739-9bd2-db3051b973a1",
+      "layout": {
+        "x": 0,
+        "y": 5,
+        "width": 23,
+        "height": 8
+      },
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "crossFilter": [],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": []
+      }
+    },
+    {
+      "queryRef": {
+        "kind": "query",
+        "queryId": "00b5aae1-99fc-43bb-b121-e8040103c178"
+      },
+      "id": "d2e94420-8f8d-4f89-b55a-13cb465d0172",
+      "title": "Lowest-Highest",
+      "visualType": "table",
+      "pageId": "3939e30a-e873-4739-9bd2-db3051b973a1",
+      "layout": {
+        "x": 5,
+        "y": 16,
+        "width": 5,
+        "height": 10
+      },
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "crossFilter": [],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": []
+      }
+    },
+    {
+      "queryRef": {
+        "kind": "query",
+        "queryId": "d39d9a71-f6b7-4b59-b142-fac47e048986"
+      },
+      "id": "aed94786-0d9b-4809-af5d-5ad219bc196f",
+      "title": "Unique Values",
+      "visualType": "table",
+      "pageId": "3939e30a-e873-4739-9bd2-db3051b973a1",
+      "layout": {
+        "x": 10,
+        "y": 16,
+        "width": 4,
+        "height": 10
+      },
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "crossFilter": [],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": []
+      }
+    },
+    {
+      "queryRef": {
+        "kind": "query",
+        "queryId": "d501e0ce-a3cf-41af-bca2-a7663846665e"
+      },
+      "id": "2a0dcb8f-a0b6-4ac3-967e-414e0194e7ec",
+      "title": "Sample Values",
+      "visualType": "pie",
+      "pageId": "3939e30a-e873-4739-9bd2-db3051b973a1",
+      "layout": {
+        "x": 14,
+        "y": 16,
+        "width": 9,
+        "height": 10
+      },
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "hideLegend": false,
+        "legendLocation": "bottom",
+        "xColumn": null,
+        "yColumns": null,
+        "seriesColumns": null,
+        "labelDisabled": false,
+        "pie__label": [
+          "name",
+          "percentage"
+        ],
+        "tooltipDisabled": false,
+        "pie__tooltip": [
+          "name",
+          "percentage",
+          "value"
+        ],
+        "pie__orderBy": "size",
+        "pie__kind": "pie",
+        "pie__topNSlices": null,
+        "crossFilter": [],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": []
+      }
+    },
+    {
+      "markdownText": "---\r\n### 🛠️Use cross-filters to filter data across the following tiles. Select a column from the schema tile below, then right-click and select cross-filter. ###\r\n---",
+      "id": "fb06f8a0-6795-4cff-bc75-de52cd91572c",
+      "title": "",
+      "visualType": "markdownCard",
+      "pageId": "3939e30a-e873-4739-9bd2-db3051b973a1",
+      "layout": {
+        "x": 0,
+        "y": 13,
+        "width": 23,
+        "height": 3
+      },
+      "visualOptions": {
+        "table__enableRenderLinks": true,
+        "colorRulesDisabled": true,
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "crossFilter": [],
+        "drillthrough": [],
+        "table__renderLinks": [],
+        "colorRules": []
+      }
+    },
+    {
+      "id": "e66869b4-0b93-4019-bc7d-16b3be14e858",
+      "title": "S&P 500 Index over the years",
+      "visualType": "timechart",
+      "pageId": "16ed4db5-138c-451a-b03a-0a3d1dec941a",
+      "layout": {
+        "x": 0,
+        "y": 3,
+        "width": 20,
+        "height": 7
+      },
+      "queryRef": {
+        "kind": "query",
+        "queryId": "40be573f-9c66-4578-bc75-bb23a2eddf83"
+      },
+      "visualOptions": {
+        "multipleYAxes": {
+          "base": {
+            "id": "-1",
+            "label": "",
+            "columns": [],
+            "yAxisMaximumValue": null,
+            "yAxisMinimumValue": null,
+            "yAxisScale": "linear",
+            "horizontalLines": []
+          },
+          "additional": [],
+          "showMultiplePanels": false
+        },
+        "hideLegend": false,
+        "legendLocation": "bottom",
+        "xColumnTitle": "",
+        "xColumn": null,
+        "yColumns": null,
+        "seriesColumns": null,
+        "xAxisScale": "linear",
+        "verticalLine": "",
+        "crossFilterDisabled": false,
+        "drillthroughDisabled": false,
+        "crossFilter": [],
+        "drillthrough": [],
+        "selectedDataOnLoad": {
+          "all": true,
+          "limit": 10
+        },
+        "dataPointsTooltip": {
+          "all": false,
+          "limit": 1
+        }
+      }
+    },
+    {
+      "id": "64347d08-1d14-44d0-baac-e9104a8a7503",
+      "title": "Total companies",
+      "visualType": "card",
+      "pageId": "16ed4db5-138c-451a-b03a-0a3d1dec941a",
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 6,
+        "height": 3
+      },
+      "queryRef": {
+        "kind": "query",
+        "queryId": "9035a9df-92b4-42d1-9f45-bb86c8102092"
+      },
+      "visualOptions": {
+        "multiStat__textSize": "auto",
+        "multiStat__valueColumn": null,
+        "colorRulesDisabled": false,
+        "colorRules": []
+      }
+    },
+    {
+      "id": "67b15fbb-e21d-4f37-986d-c8942074f156",
+      "title": "Total records",
+      "visualType": "card",
+      "pageId": "16ed4db5-138c-451a-b03a-0a3d1dec941a",
+      "layout": {
+        "x": 6,
+        "y": 0,
+        "width": 6,
+        "height": 3
+      },
+      "queryRef": {
+        "kind": "query",
+        "queryId": "9e23a340-9660-4059-b509-14957521516a"
+      },
+      "visualOptions": {
+        "multiStat__textSize": "auto",
+        "multiStat__valueColumn": null,
+        "colorRulesDisabled": false,
+        "colorRules": []
+      }
+    }
+  ],
+  "baseQueries": [
+    {
+      "id": "176f96b8-4034-4f3b-924b-84f191ea1b04",
+      "queryId": "8b62cf91-6123-4a75-94cd-34c8af0d7eca",
+      "variableName": "_BaseTable"
+    },
+    {
+      "id": "e6360085-20a1-469b-9863-0f60e6fc303d",
+      "queryId": "cd3d8879-5720-4682-8375-14ebb9b8f85d",
+      "variableName": "_Base"
+    },
+    {
+      "id": "57d24785-3ccc-48cc-9446-c35d37e43fba",
+      "queryId": "fa9a287c-592f-4dd4-bce1-07629fd6010c",
+      "variableName": "_Dates"
+    },
+    {
+      "id": "55dde95a-f1af-4540-a566-2497e9a7f228",
+      "queryId": "ff2e1ea7-f7ed-4ff8-89fa-365748a4b4e3",
+      "variableName": "_schema"
+    }
+  ],
+  "parameters": [
+    {
+      "kind": "string",
+      "id": "3bfd0126-5beb-4530-b915-7b1ebc15b751",
+      "displayName": "By date",
+      "description": "",
+      "variableName": "_Date",
+      "selectionType": "scalar",
+      "includeAllOption": false,
+      "defaultValue": {
+        "kind": "value",
+        "value": "ingestion_time()"
+      },
+      "dataSource": {
+        "kind": "query",
+        "columns": {
+          "value": "ColumnName"
+        },
+        "queryRef": {
+          "kind": "query",
+          "queryId": "b7acd49a-95cd-452a-9cfc-5997ed72f0f4"
+        },
+        "autoReset": true
+      },
+      "showOnPages": {
+        "kind": "selection",
+        "pageIds": [
+          "16ed4db5-138c-451a-b03a-0a3d1dec941a",
+          "3939e30a-e873-4739-9bd2-db3051b973a1"
+        ]
+      }
+    },
+    {
+      "kind": "string",
+      "id": "3b8ce65e-3b6a-494a-a7d2-19fe73f02c1c",
+      "displayName": "Columns",
+      "description": "",
+      "variableName": "_Column",
+      "selectionType": "scalar",
+      "includeAllOption": false,
+      "defaultValue": {
+        "kind": "query-result"
+      },
+      "dataSource": {
+        "kind": "query",
+        "columns": {
+          "value": "ColumnName"
+        },
+        "queryRef": {
+          "kind": "query",
+          "queryId": "7dad515f-e2f8-4c30-a86a-a67bde68736c"
+        }
+      },
+      "showOnPages": {
+        "kind": "selection",
+        "pageIds": []
+      }
+    },
+    {
+      "kind": "duration",
+      "id": "7f970a29-2620-4d23-aede-31956392c7f3",
+      "displayName": "Time range",
+      "description": "",
+      "beginVariableName": "_startTime",
+      "endVariableName": "_endTime",
+      "defaultValue": {
+        "kind": "dynamic",
+        "count": 7,
+        "unit": "days"
+      },
+      "showOnPages": {
+        "kind": "selection",
+        "pageIds": [
+          "16ed4db5-138c-451a-b03a-0a3d1dec941a",
+          "3939e30a-e873-4739-9bd2-db3051b973a1"
+        ]
+      }
+    }
+  ],
+  "dataSources": [
+    {
+      "kind": "kusto-trident",
+      "id": "2933ee44-ed11-49e1-87ae-d24e11afd3d4",
+      "name": "Stocks",
+      "clusterUri": "",
+      "databaseArtifactId": "1f76aa0f-e613-4ecc-801c-2eb9a19ff60d",
+      "database": "a19ff60d-2eb9-801c-4ecc-e6131f76aa0f",
+      "workspace": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "pages": [
+    {
+      "name": "Insights",
+      "id": "16ed4db5-138c-451a-b03a-0a3d1dec941a"
+    },
+    {
+      "name": "Data profile",
+      "id": "3939e30a-e873-4739-9bd2-db3051b973a1"
+    }
+  ],
+  "queries": [
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_Base | summarize maxHigh=max(High), minLow=min(Low), avgOpen=avg(Open), avgClose=avg(Close) by Ticker | render table",
+      "id": "d5d0b92c-8f48-4eb0-b1e4-0afbb3cbe74a",
+      "usedVariables": [
+        "_Base",
+        "_Date"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_Base | summarize countVolume=count() by Ticker | top 10 by countVolume | render columnchart",
+      "id": "62e96c91-4a85-462d-bd4a-80326d7ac98e",
+      "usedVariables": [
+        "_Base",
+        "_Date"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_Base | summarize avgPrice=avg(toreal(Open)) by Ticker | top 10 by avgPrice ",
+      "id": "d4399cfe-d0ce-40c2-bec8-7d149583a533",
+      "usedVariables": [
+        "_Base"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_Base\r\n| where Ticker has 'MSFT'\r\n| where Date > datetime_add('year', -10, now())\r\n| project Date, Close | render linechart\r\n",
+      "id": "18313dee-bbc7-41c3-9635-85b2adf97183",
+      "usedVariables": [
+        "_Base"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "let TimeRange=toscalar(_Base | summarize Start=min(column_ifexists(_Date,ingestion_time())),End=max(column_ifexists(_Date,ingestion_time()))| project totimespan(End - Start));let Bin=case(TimeRange > 7d,1d,TimeRange> 1d,1h,TimeRange>6h,10m,1m);_Base| summarize Rows=count() by bin(column_ifexists(_Date,ingestion_time()),Bin)",
+      "id": "1eed0159-19f0-4401-a6df-c6e81327623e",
+      "usedVariables": [
+        "_Base",
+        "_Date"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_schema| project ColumnName,ColumnType",
+      "id": "dc9e2dc2-a830-4226-a952-6fee2fc9702e",
+      "usedVariables": [
+        "_schema"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_Base| take 100",
+      "id": "e8588059-cec1-4e5d-a4f6-a6e0e3c98c16",
+      "usedVariables": [
+        "_Base"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_Base| summarize Lowest=min(column_ifexists(_Column,ingestion_time())),Highest=max(column_ifexists(_Column,ingestion_time()))",
+      "id": "00b5aae1-99fc-43bb-b121-e8040103c178",
+      "usedVariables": [
+        "_Base",
+        "_Column"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_Base| summarize UniqueVales=dcount(column_ifexists(_Column,ingestion_time()))",
+      "id": "d39d9a71-f6b7-4b59-b142-fac47e048986",
+      "usedVariables": [
+        "_Base",
+        "_Column"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_Base| take 1000000 | summarize ['Appears in 1M sample rows']=count() by  tostring(Ticker)| take 10| order by ['Appears in 1M sample rows']",
+      "id": "d501e0ce-a3cf-41af-bca2-a7663846665e",
+      "usedVariables": [
+        "_Base"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_Base\n| where Ticker == \"^GSPC\" // Stock Symbol for S&P 500 index\n| where Date > datetime_add('year', -10, now())\n| project Close, Date\n| order by Date asc\n| render timechart\n",
+      "id": "40be573f-9c66-4578-bc75-bb23a2eddf83",
+      "usedVariables": [
+        "_Base"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_Base\n| summarize dcount(Ticker), count()",
+      "id": "9035a9df-92b4-42d1-9f45-bb86c8102092",
+      "usedVariables": [
+        "_Base"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_Base\n| summarize count() ",
+      "id": "9e23a340-9660-4059-b509-14957521516a",
+      "usedVariables": [
+        "_Base"
+      ]
+    },
+    {
+      "id": "8b62cf91-6123-4a75-94cd-34c8af0d7eca",
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "Stocks",
+      "usedVariables": []
+    },
+    {
+      "id": "cd3d8879-5720-4682-8375-14ebb9b8f85d",
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "table('Stocks','hotcache')| where column_ifexists( _Date,ingestion_time()) between(_startTime.._endTime)",
+      "usedVariables": [
+        "_Date",
+        "_endTime",
+        "_startTime"
+      ]
+    },
+    {
+      "id": "fa9a287c-592f-4dd4-bce1-07629fd6010c",
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_schema| union (print ColumnName='ingestion_time()',ColumnType='datetime')| where ColumnType =='datetime'| project ColumnName",
+      "usedVariables": [
+        "_schema"
+      ]
+    },
+    {
+      "id": "ff2e1ea7-f7ed-4ff8-89fa-365748a4b4e3",
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_BaseTable| getschema",
+      "usedVariables": [
+        "_BaseTable"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_Dates",
+      "id": "b7acd49a-95cd-452a-9cfc-5997ed72f0f4",
+      "usedVariables": [
+        "_Dates"
+      ]
+    },
+    {
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "2933ee44-ed11-49e1-87ae-d24e11afd3d4"
+      },
+      "text": "_schema| project ColumnName",
+      "id": "7dad515f-e2f8-4c30-a86a-a67bde68736c",
+      "usedVariables": [
+        "_schema"
+      ]
+    }
+  ],
+  "embeddedApps": []
+}

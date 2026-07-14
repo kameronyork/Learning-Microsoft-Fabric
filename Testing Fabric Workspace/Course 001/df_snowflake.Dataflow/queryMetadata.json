@@ -1,0 +1,60 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "df_snowflake",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "PO": {
+      "queryId": "5ea68f80-5797-44a0-a502-4880c16e64b5",
+      "queryName": "PO",
+      "loadEnabled": false
+    },
+    "Supplier": {
+      "queryId": "4268701f-8f10-4e1b-8235-f1333babbbc5",
+      "queryName": "Supplier",
+      "loadEnabled": false
+    },
+    "SupplierCategories": {
+      "queryId": "b2787b84-3a87-4a40-b49f-31421bc9932d",
+      "queryName": "SupplierCategories",
+      "loadEnabled": false
+    },
+    "Suppliers": {
+      "queryId": "ad054e6b-01ef-4dab-9b5a-156b54aa8e9d",
+      "queryName": "Suppliers",
+      "loadEnabled": false
+    },
+    "POLineItems": {
+      "queryId": "c00ceb8e-0402-479a-b0d5-0be86d6ba43d",
+      "queryName": "POLineItems",
+      "loadEnabled": false
+    },
+    "PO_DataDestination": {
+      "queryId": "ed83d53d-2405-4c3b-989c-58333111bc8d",
+      "queryName": "PO_DataDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    },
+    "Supplier_DataDestination": {
+      "queryId": "24f9d38c-a036-41fb-917e-85f7e110a8b6",
+      "queryName": "Supplier_DataDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "dlhdzca-bab11165.snowflakecomputing.com;READONLY",
+      "kind": "Snowflake",
+      "connectionId": "{\"ClusterId\":\"b8f2dd99-4c47-4c78-91dd-085c41105a48\",\"DatasourceId\":\"c131ecde-c28a-448a-b4f6-d302a82c4121\"}"
+    },
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"b8f2dd99-4c47-4c78-91dd-085c41105a48\",\"DatasourceId\":\"f3acb815-3c7a-4e33-becc-10acf9c088a3\"}"
+    }
+  ]
+}

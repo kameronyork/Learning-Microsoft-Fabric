@@ -1,0 +1,146 @@
+[
+  {
+    "name": "States",
+    "path": "/Tables",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "9ad10a8f-9add-4cea-947a-2feb36d56331",
+        "location": "https://faiadaldsfilespw.dfs.core.windows.net",
+        "subpath": "/fabrikam-sales/Delta-Parquet-Format-FY25/Application.StateProvinces"
+      }
+    }
+  },
+  {
+    "name": "ProductItemGroup",
+    "path": "/Tables",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "9ad10a8f-9add-4cea-947a-2feb36d56331",
+        "location": "https://faiadaldsfilespw.dfs.core.windows.net",
+        "subpath": "/fabrikam-sales/Delta-Parquet-Format-FY25/Warehouse.StockItemStockGroups"
+      }
+    }
+  },
+  {
+    "name": "ProductItem",
+    "path": "/Tables",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "9ad10a8f-9add-4cea-947a-2feb36d56331",
+        "location": "https://faiadaldsfilespw.dfs.core.windows.net",
+        "subpath": "/fabrikam-sales/Delta-Parquet-Format-FY25/Warehouse.StockItems"
+      }
+    }
+  },
+  {
+    "name": "ProductGroups",
+    "path": "/Tables",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "9ad10a8f-9add-4cea-947a-2feb36d56331",
+        "location": "https://faiadaldsfilespw.dfs.core.windows.net",
+        "subpath": "/fabrikam-sales/Delta-Parquet-Format-FY25/Warehouse.StockGroups"
+      }
+    }
+  },
+  {
+    "name": "InvoicesMay",
+    "path": "/Tables",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "9ad10a8f-9add-4cea-947a-2feb36d56331",
+        "location": "https://faiadaldsfilespw.dfs.core.windows.net",
+        "subpath": "/fabrikam-sales/Delta-Parquet-Format-FY25/Sales.Invoices_May"
+      }
+    }
+  },
+  {
+    "name": "Invoices",
+    "path": "/Tables",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "9ad10a8f-9add-4cea-947a-2feb36d56331",
+        "location": "https://faiadaldsfilespw.dfs.core.windows.net",
+        "subpath": "/fabrikam-sales/Delta-Parquet-Format-FY25/Sales.Invoices"
+      }
+    }
+  },
+  {
+    "name": "InvoiceLineItems",
+    "path": "/Tables",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "9ad10a8f-9add-4cea-947a-2feb36d56331",
+        "location": "https://faiadaldsfilespw.dfs.core.windows.net",
+        "subpath": "/fabrikam-sales/Delta-Parquet-Format-FY25/Sales.InvoiceLines"
+      }
+    }
+  },
+  {
+    "name": "Date",
+    "path": "/Tables",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "9ad10a8f-9add-4cea-947a-2feb36d56331",
+        "location": "https://faiadaldsfilespw.dfs.core.windows.net",
+        "subpath": "/fabrikam-sales/Delta-Parquet-Format-FY25/DateDim"
+      }
+    }
+  },
+  {
+    "name": "Customers",
+    "path": "/Tables",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "9ad10a8f-9add-4cea-947a-2feb36d56331",
+        "location": "https://faiadaldsfilespw.dfs.core.windows.net",
+        "subpath": "/fabrikam-sales/Delta-Parquet-Format-FY25/Sales.Customers"
+      }
+    }
+  },
+  {
+    "name": "Countries",
+    "path": "/Tables",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "9ad10a8f-9add-4cea-947a-2feb36d56331",
+        "location": "https://faiadaldsfilespw.dfs.core.windows.net",
+        "subpath": "/fabrikam-sales/Delta-Parquet-Format-FY25/Application.Countries"
+      }
+    }
+  },
+  {
+    "name": "Cities",
+    "path": "/Tables",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "9ad10a8f-9add-4cea-947a-2feb36d56331",
+        "location": "https://faiadaldsfilespw.dfs.core.windows.net",
+        "subpath": "/fabrikam-sales/Delta-Parquet-Format-FY25/Application.Cities"
+      }
+    }
+  },
+  {
+    "name": "BuyingGroups",
+    "path": "/Tables",
+    "target": {
+      "type": "AdlsGen2",
+      "adlsGen2": {
+        "connectionId": "9ad10a8f-9add-4cea-947a-2feb36d56331",
+        "location": "https://faiadaldsfilespw.dfs.core.windows.net",
+        "subpath": "/fabrikam-sales/Delta-Parquet-Format-FY25/Sales.BuyingGroups"
+      }
+    }
+  }
+]

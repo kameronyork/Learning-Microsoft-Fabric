@@ -1,0 +1,11 @@
+expression 'DirectLake - lh_ODL_KY' =
+		let
+		    Source = AzureStorage.DataLake("https://onelake.dfs.fabric.microsoft.com/77b56f8d-cd4a-49ba-a22b-e0f91f558ccd/da36850a-f63a-44f6-af9b-77a6488add52", [HierarchicalNavigation=true])
+		in
+		    Source
+	lineageTag: 9a53466e-ee2d-4663-a922-65116f932b40
+
+	annotation PBI_IncludeFutureArtifacts = False
+
+	annotation PBI_RemovedChildren = [{"remoteItemId":{"analysisServicesObject":{"sourceName":null,"sourceLineageTag":"[dbo].[holiday]"}},"objectType":"Table"}]
+
