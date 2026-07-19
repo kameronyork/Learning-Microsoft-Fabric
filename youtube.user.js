@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Hide Fully Watched YouTube Videos (Mobile Safari)
+// @name         Hide Fully Watched YouTube Videos - Mobile Safari (Fixed)
 // @namespace    https://coopernorman.com/userscripts
-// @version      1.0.0
-// @description  Hides videos that YouTube marks as fully watched across mobile and desktop-layout pages, including Subscriptions.
+// @version      2.2.0
+// @description  Hides completed YouTube videos throughout mobile Safari, including Subscriptions.
 // @match        https://m.youtube.com/*
 // @match        https://www.youtube.com/*
 // @grant        none
@@ -13,63 +13,90 @@
     'use strict';
 
     /*
-     * Hide only completed videos.
+     * YouTube sometimes renders a completed progress bar as 99.x%
+     * instead of exactly 100%.
      *
-     * The small tolerance accounts for fractional pixel/rendering math
-     * where a visually complete 100% progress bar may measure as 99.99%.
+     * Set this to 100 for exact-100-only detection, but doing so may
+     * cause some visually completed videos to remain visible.
      */
-    const FULLY_WATCHED_THRESHOLD = 100;
-    const RENDERING_TOLERANCE = 0.05;
+    const COMPLETE_PERCENT = 99;
 
-    const HIDDEN_CLASS = 'cn-fully-watched-video-hidden';
-    const EMPTY_SECTION_CLASS = 'cn-empty-watched-section-hidden';
-    const STYLE_ID = 'cn-hide-fully-watched-youtube-style';
+    const HIDDEN_CLASS = 'cn-fully-watched-hidden';
+    const STYLE_ID = 'cn-fully-watched-style';
 
     /*
-     * These are thumbnail progress indicators, not the progress bar
-     * inside the video player itself.
+     * Known complete video-card containers used across mobile YouTube
+     * and the desktop-layout version that Safari can occasionally load.
      */
-    const PROGRESS_SELECTOR = [
-        '.ytThumbnailOverlayProgressBarHostWatchedProgressBarSegment',
-        '[class*="ThumbnailOverlayProgressBarHostWatchedProgressBarSegment"]',
-        'ytm-thumbnail-overlay-resume-playback-renderer .thumbnail-overlay-resume-playback-progress',
-        'ytm-thumbnail-overlay-resume-playback-renderer [class*="resume-playback-progress"]',
-        'ytd-thumbnail-overlay-resume-playback-renderer #progress',
-        'yt-thumbnail-overlay-progress-bar-view-model [role="progressbar"]',
-        'ytm-thumbnail-overlay-resume-playback-renderer [role="progressbar"]',
-        'ytd-thumbnail-overlay-resume-playback-renderer [role="progressbar"]'
-    ].join(',');
-
-    /*
-     * Video-card wrappers used by mobile and desktop-layout YouTube.
-     */
-    const CARD_SELECTORS = [
-        'ytm-rich-item-renderer',
+    const CARD_SELECTOR = [
         'ytm-video-with-context-renderer',
+        'ytm-rich-item-renderer',
         'ytm-compact-video-renderer',
-        'ytm-playlist-video-renderer',
         'ytm-grid-video-renderer',
+        'ytm-playlist-video-renderer',
         'ytm-video-card-renderer',
         'ytm-media-item',
+        'yt-lockup-view-model',
+
         'ytd-rich-item-renderer',
         'ytd-video-renderer',
         'ytd-compact-video-renderer',
         'ytd-grid-video-renderer',
         'ytd-playlist-video-renderer',
-        'ytd-playlist-panel-video-renderer',
-        'yt-lockup-view-model'
-    ];
+        'ytd-playlist-panel-video-renderer'
+    ].join(',');
 
-    const CARD_SELECTOR = CARD_SELECTORS.join(',');
+    /*
+     * Known YouTube watch-progress elements.
+     *
+     * This includes:
+     * - Current view-model progress bars
+     * - Current "Modern" progress bars
+     * - Older mobile resume-playback renderers
+     * - Desktop-layout fallbacks
+     * - Generic A/B-test fallbacks
+     */
+    const PROGRESS_SELECTOR = [
+        '.ytThumbnailOverlayProgressBarHostWatchedProgressBarSegment',
+        '.ytThumbnailOverlayProgressBarHostWatchedProgressBarSegmentModern',
+        '[class*="WatchedProgressBarSegment"]',
 
-    const SECTION_SELECTOR = [
+        'ytm-thumbnail-overlay-resume-playback-renderer #progress',
+        'ytm-thumbnail-overlay-resume-playback-renderer [role="progressbar"]',
+
+        'ytd-thumbnail-overlay-resume-playback-renderer #progress',
+        'ytd-thumbnail-overlay-resume-playback-renderer [role="progressbar"]',
+
+        'yt-thumbnail-overlay-progress-bar-view-model [role="progressbar"]',
+        'yt-thumbnail-overlay-progress-bar-view-model [style*="width"]',
+
+        '[class*="resume-playback-progress"]',
+        '[class*="watched-progress"]'
+    ].join(',');
+
+    const VIDEO_LINK_SELECTOR = [
+        'a[href*="/watch"]',
+        'a[href*="youtu.be/"]',
+        'a[href*="/live/"]'
+    ].join(',');
+
+    /*
+     * Stop walking upward once we reach a section containing multiple
+     * videos. This prevents accidentally hiding a complete feed.
+     */
+    const STOP_SELECTOR = [
+        'ytm-item-section-renderer',
         'ytm-rich-section-renderer',
         'ytm-shelf-renderer',
-        'ytm-item-section-renderer',
-        'grid-shelf-view-model',
+
+        'ytd-item-section-renderer',
         'ytd-rich-section-renderer',
         'ytd-shelf-renderer',
-        'ytd-item-section-renderer'
+
+        'ytm-app',
+        'ytd-app',
+        'main',
+        '[role="main"]'
     ].join(',');
 
     const CONTINUATION_SELECTOR = [
@@ -80,7 +107,6 @@
 
     let scanTimer = 0;
     let refillTimer = 0;
-    let observer = null;
 
     function injectStyle() {
         if (document.getElementById(STYLE_ID)) {
@@ -88,204 +114,404 @@
         }
 
         const style = document.createElement('style');
+
         style.id = STYLE_ID;
 
         style.textContent = `
-            .${HIDDEN_CLASS},
-            .${EMPTY_SECTION_CLASS} {
+            .${HIDDEN_CLASS} {
                 display: none !important;
             }
         `;
 
-        const parent = document.head || document.documentElement;
+        const parent =
+            document.head ||
+            document.documentElement;
 
         if (parent) {
             parent.appendChild(style);
         } else {
-            window.setTimeout(injectStyle, 20);
+            window.setTimeout(
+                injectStyle,
+                20
+            );
         }
     }
 
-    function parsePercentage(value) {
-        if (value === null || value === undefined) {
+    function parseNumber(value) {
+        if (
+            value === null ||
+            value === undefined
+        ) {
             return null;
         }
 
-        const match = String(value).match(/-?\d+(?:\.\d+)?/);
+        const match = String(value).match(
+            /-?\d+(?:\.\d+)?/
+        );
 
         if (!match) {
             return null;
         }
 
-        const number = Number.parseFloat(match[0]);
+        const number = Number.parseFloat(
+            match[0]
+        );
 
-        return Number.isFinite(number) ? number : null;
+        return Number.isFinite(number)
+            ? number
+            : null;
     }
 
-    function percentageFromTransform(transform) {
-        if (!transform || transform === 'none') {
+    function percentFromTransform(transform) {
+        if (
+            !transform ||
+            transform === 'none'
+        ) {
             return null;
         }
 
         /*
-         * matrix(a, b, c, d, tx, ty)
+         * Example:
          *
-         * The first value, "a", is the horizontal scale.
+         * transform: scaleX(0.995)
+         */
+        const scale = transform.match(
+            /scaleX\(\s*(-?\d+(?:\.\d+)?)\s*\)/i
+        );
+
+        if (scale) {
+            const value = Number.parseFloat(
+                scale[1]
+            );
+
+            return (
+                value >= 0 &&
+                value <= 1.01
+            )
+                ? value * 100
+                : null;
+        }
+
+        /*
+         * Computed transforms are frequently represented as:
+         *
+         * matrix(scaleX, 0, 0, scaleY, x, y)
          */
         const matrix = transform.match(
             /^matrix\(\s*(-?\d+(?:\.\d+)?)/i
         );
 
         if (matrix) {
-            const scaleX = Number.parseFloat(matrix[1]);
+            const value = Number.parseFloat(
+                matrix[1]
+            );
 
-            if (
-                Number.isFinite(scaleX) &&
-                scaleX >= 0 &&
-                scaleX <= 1.001
-            ) {
-                return scaleX * 100;
-            }
-        }
-
-        const scale = transform.match(
-            /scaleX\(\s*(-?\d+(?:\.\d+)?)\s*\)/i
-        );
-
-        if (scale) {
-            const scaleX = Number.parseFloat(scale[1]);
-
-            if (
-                Number.isFinite(scaleX) &&
-                scaleX >= 0 &&
-                scaleX <= 1.001
-            ) {
-                return scaleX * 100;
-            }
+            return (
+                value >= 0 &&
+                value <= 1.01
+            )
+                ? value * 100
+                : null;
         }
 
         return null;
     }
 
-    function readProgressPercentage(progressElement) {
+    function explicitPercent(element) {
+        /*
+         * First check accessible progress attributes.
+         */
+        const ariaNow = parseNumber(
+            element.getAttribute('aria-valuenow')
+        );
+
+        const ariaMax = parseNumber(
+            element.getAttribute('aria-valuemax')
+        );
+
+        if (ariaNow !== null) {
+            return (
+                ariaMax !== null &&
+                ariaMax > 0
+            )
+                ? (ariaNow / ariaMax) * 100
+                : ariaNow;
+        }
+
+        /*
+         * Check common data attributes and CSS variables.
+         */
         const directValues = [
-            progressElement.getAttribute('aria-valuenow'),
-            progressElement.getAttribute('data-progress'),
-            progressElement.getAttribute('data-percent'),
-            progressElement.style.getPropertyValue('--progress'),
-            progressElement.style.getPropertyValue('--progress-percent')
+            element.getAttribute(
+                'data-progress'
+            ),
+            element.getAttribute(
+                'data-percent'
+            ),
+            element.getAttribute(
+                'data-percentage'
+            ),
+            element.style.getPropertyValue(
+                '--progress'
+            ),
+            element.style.getPropertyValue(
+                '--progress-percent'
+            ),
+            element.style.getPropertyValue(
+                '--yt-progress-percent'
+            )
         ];
 
         for (const value of directValues) {
-            const percentage = parsePercentage(value);
+            const percent = parseNumber(value);
 
             if (
-                percentage !== null &&
-                percentage >= 0 &&
-                percentage <= 100.5
+                percent !== null &&
+                percent >= 0 &&
+                percent <= 101
             ) {
-                return percentage;
+                return percent;
             }
         }
 
         /*
-         * Check for an inline width such as:
+         * Check an inline style such as:
          *
-         * style="width: 100%"
+         * style="width: 100%;"
          */
         const inlineStyle =
-            progressElement.getAttribute('style') || '';
+            element.getAttribute('style') || '';
 
-        const widthMatch = inlineStyle.match(
-            /(?:^|;)\s*width\s*:\s*(\d+(?:\.\d+)?)%/i
+        const width = inlineStyle.match(
+            /(?:^|;)\s*width\s*:\s*(\d+(?:\.\d+)?)\s*%/i
         );
 
-        if (widthMatch) {
-            return Number.parseFloat(widthMatch[1]);
+        if (width) {
+            return Number.parseFloat(
+                width[1]
+            );
         }
 
         /*
-         * Check for an inline scaleX transform.
+         * Finally check inline and computed scale transforms.
          */
-        const inlineTransform = percentageFromTransform(
-            progressElement.style.transform
+        return (
+            percentFromTransform(
+                element.style.transform
+            ) ??
+            percentFromTransform(
+                window.getComputedStyle(
+                    element
+                ).transform
+            )
         );
+    }
 
-        if (inlineTransform !== null) {
-            return inlineTransform;
+    function geometricPercent(element) {
+        const bar =
+            element.getBoundingClientRect();
+
+        if (
+            bar.width <= 0 ||
+            bar.height <= 0
+        ) {
+            return null;
         }
 
+        let track = element.parentElement;
+
         /*
-         * Some YouTube layouts use pixel widths rather than percentage
-         * values. Compare the progress element with its parent track.
+         * Walk upward until we find the narrow progress track that
+         * contains the colored watched segment.
          */
-        const parent = progressElement.parentElement;
-
-        if (parent) {
-            const progressRect =
-                progressElement.getBoundingClientRect();
-
-            const parentRect =
-                parent.getBoundingClientRect();
+        for (
+            let depth = 0;
+            track && depth < 5;
+            depth += 1
+        ) {
+            const rect =
+                track.getBoundingClientRect();
 
             if (
-                progressRect.width > 0 &&
-                parentRect.width > 0
+                rect.width >= bar.width &&
+                rect.width > 40 &&
+                rect.height > 0 &&
+                rect.height <= 18
             ) {
-                const percentage =
-                    (progressRect.width / parentRect.width) * 100;
-
-                if (
-                    percentage >= 0 &&
-                    percentage <= 101
-                ) {
-                    return percentage;
-                }
+                return (
+                    bar.width /
+                    rect.width
+                ) * 100;
             }
-        }
 
-        /*
-         * Finally, check the computed transform supplied by YouTube's
-         * styles rather than directly in the element's style attribute.
-         */
-        const computedTransform = percentageFromTransform(
-            window.getComputedStyle(progressElement).transform
-        );
-
-        if (computedTransform !== null) {
-            return computedTransform;
+            track = track.parentElement;
         }
 
         return null;
     }
 
-    function findBestCard(element) {
-        for (const selector of CARD_SELECTORS) {
-            const card = element.closest(selector);
+    function isYouTubeRed(color) {
+        const match = String(color).match(
+            /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)/i
+        );
 
-            if (card) {
-                return card;
-            }
+        if (!match) {
+            return false;
+        }
+
+        const red = Number(match[1]);
+        const green = Number(match[2]);
+        const blue = Number(match[3]);
+
+        const alpha =
+            match[4] === undefined
+                ? 1
+                : Number(match[4]);
+
+        /*
+         * Accept YouTube's red and its brighter pink/red mobile
+         * progress-bar variants.
+         */
+        return (
+            alpha > 0.15 &&
+            red >= 175 &&
+            green <= 110 &&
+            blue <= 145 &&
+            red >= green * 1.5
+        );
+    }
+
+    function looksRed(element) {
+        const styles = [
+            window.getComputedStyle(
+                element
+            ),
+            window.getComputedStyle(
+                element,
+                '::before'
+            ),
+            window.getComputedStyle(
+                element,
+                '::after'
+            )
+        ];
+
+        return styles.some((style) =>
+            [
+                style.backgroundColor,
+                style.borderTopColor,
+                style.borderBottomColor
+            ].some(isYouTubeRed)
+        );
+    }
+
+    function getThumbnailRect(card) {
+        /*
+         * The largest image inside a card is normally its video
+         * thumbnail. Channel avatars are much smaller.
+         */
+        const images = Array.from(
+            card.querySelectorAll('img')
+        )
+            .map((image) =>
+                image.getBoundingClientRect()
+            )
+            .filter((rect) =>
+                rect.width > 120 &&
+                rect.height > 60
+            )
+            .sort(
+                (a, b) =>
+                    b.width * b.height -
+                    a.width * a.height
+            );
+
+        if (images.length > 0) {
+            return images[0];
         }
 
         /*
-         * Last-resort wrappers for occasional YouTube experiments.
+         * Fallback if the thumbnail image has not loaded yet.
          */
-        return element.closest('li, article');
+        const thumbnail = card.querySelector(
+            [
+                'ytm-thumbnail',
+                'ytd-thumbnail',
+                'yt-thumbnail-view-model'
+            ].join(',')
+        );
+
+        return thumbnail
+            ? thumbnail.getBoundingClientRect()
+            : null;
     }
 
-    function cardIsFullyWatched(card) {
-        const progressElements =
-            card.querySelectorAll(PROGRESS_SELECTOR);
+    function hasFullVisualProgressBar(card) {
+        const thumbnail =
+            getThumbnailRect(card);
 
-        for (const progressElement of progressElements) {
-            const percentage =
-                readProgressPercentage(progressElement);
+        if (
+            !thumbnail ||
+            thumbnail.width <= 0
+        ) {
+            return false;
+        }
+
+        /*
+         * This is the important mobile-Safari fallback.
+         *
+         * It identifies the thin pink/red horizontal line spanning the
+         * bottom of the thumbnail, even when YouTube gives it an unknown
+         * or newly A/B-tested class name.
+         */
+        const possibleBars =
+            card.querySelectorAll(
+                [
+                    'div',
+                    'span',
+                    'progress',
+                    '[role="progressbar"]'
+                ].join(',')
+            );
+
+        for (const element of possibleBars) {
+            const rect =
+                element.getBoundingClientRect();
 
             if (
-                percentage !== null &&
-                percentage + RENDERING_TOLERANCE >=
-                    FULLY_WATCHED_THRESHOLD
+                rect.width <
+                    thumbnail.width *
+                    (COMPLETE_PERCENT / 100) ||
+                rect.height < 1 ||
+                rect.height > 12
+            ) {
+                continue;
+            }
+
+            const horizontallyAligned =
+                Math.abs(
+                    rect.left -
+                    thumbnail.left
+                ) <= 12 &&
+                Math.abs(
+                    rect.right -
+                    thumbnail.right
+                ) <= 12;
+
+            const atThumbnailBottom =
+                Math.abs(
+                    rect.bottom -
+                    thumbnail.bottom
+                ) <= 18 ||
+                Math.abs(
+                    rect.top -
+                    thumbnail.bottom
+                ) <= 18;
+
+            if (
+                horizontallyAligned &&
+                atThumbnailBottom &&
+                looksRed(element)
             ) {
                 return true;
             }
@@ -294,21 +520,128 @@
         return false;
     }
 
-    function collectCards() {
+    function isFullyWatched(card) {
+        /*
+         * First use YouTube's known progress elements.
+         */
+        const progressElements =
+            card.querySelectorAll(
+                PROGRESS_SELECTOR
+            );
+
+        for (
+            const progress of
+            progressElements
+        ) {
+            const explicit =
+                explicitPercent(progress);
+
+            const geometric =
+                geometricPercent(progress);
+
+            if (
+                (
+                    explicit !== null &&
+                    explicit >=
+                        COMPLETE_PERCENT
+                ) ||
+                (
+                    geometric !== null &&
+                    geometric >=
+                        COMPLETE_PERCENT
+                )
+            ) {
+                return true;
+            }
+        }
+
+        /*
+         * Fall back to visually recognizing the completed bar.
+         */
+        return hasFullVisualProgressBar(
+            card
+        );
+    }
+
+    function uniqueVideoUrls(element) {
+        return new Set(
+            Array.from(
+                element.querySelectorAll(
+                    VIDEO_LINK_SELECTOR
+                )
+            )
+                .map((link) => link.href)
+                .filter(Boolean)
+        );
+    }
+
+    function findUnknownCard(link) {
+        let current = link.parentElement;
+        let best = null;
+
+        /*
+         * Walk upward while the container still represents only one
+         * unique video URL. The final matching ancestor is normally
+         * the complete card, including the thumbnail and description.
+         */
+        for (
+            let depth = 0;
+            current && depth < 16;
+            depth += 1
+        ) {
+            if (
+                current.matches?.(
+                    STOP_SELECTOR
+                ) ||
+                current === document.body ||
+                current ===
+                    document.documentElement
+            ) {
+                break;
+            }
+
+            const urls =
+                uniqueVideoUrls(current);
+
+            if (urls.size === 1) {
+                best = current;
+            } else if (urls.size > 1) {
+                break;
+            }
+
+            current =
+                current.parentElement;
+        }
+
+        return best;
+    }
+
+    function findCards() {
         const cards = new Set(
-            document.querySelectorAll(CARD_SELECTOR)
+            document.querySelectorAll(
+                CARD_SELECTOR
+            )
         );
 
         /*
-         * Work outward from every known progress bar. This allows the
-         * script to handle some newly tested YouTube card wrappers even
-         * when their custom-element name is not listed above.
+         * YouTube frequently tests new renderer names. Building cards
+         * outward from watch links means the script is not completely
+         * dependent on knowing the newest custom-element name.
          */
-        for (
-            const progressElement of
-            document.querySelectorAll(PROGRESS_SELECTOR)
-        ) {
-            const card = findBestCard(progressElement);
+        const videoLinks =
+            document.querySelectorAll(
+                VIDEO_LINK_SELECTOR
+            );
+
+        for (const link of videoLinks) {
+            const knownCard =
+                link.closest(
+                    CARD_SELECTOR
+                );
+
+            const card =
+                knownCard ||
+                findUnknownCard(link);
 
             if (card) {
                 cards.add(card);
@@ -318,13 +651,29 @@
         return cards;
     }
 
-    function updateCards() {
+    function hideWatchedCards() {
         let newlyHidden = 0;
 
-        for (const card of collectCards()) {
-            const shouldHide = cardIsFullyWatched(card);
+        for (const card of findCards()) {
+            /*
+             * Avoid processing unrelated containers that happen to use
+             * one of YouTube's generic renderer names.
+             */
+            if (
+                !card.querySelector(
+                    VIDEO_LINK_SELECTOR
+                )
+            ) {
+                continue;
+            }
+
+            const shouldHide =
+                isFullyWatched(card);
+
             const wasHidden =
-                card.classList.contains(HIDDEN_CLASS);
+                card.classList.contains(
+                    HIDDEN_CLASS
+                );
 
             if (shouldHide !== wasHidden) {
                 card.classList.toggle(
@@ -341,99 +690,88 @@
         return newlyHidden;
     }
 
-    function cardIsActuallyVisible(card) {
-        return (
-            !card.classList.contains(HIDDEN_CLASS) &&
-            !card.closest(`.${HIDDEN_CLASS}`)
+    function nudgeInfiniteScroll() {
+        window.clearTimeout(
+            refillTimer
         );
-    }
 
-    function updateEmptySections() {
-        for (
-            const section of
-            document.querySelectorAll(SECTION_SELECTOR)
-        ) {
-            /*
-             * Do not hide a container that owns YouTube's infinite-scroll
-             * loader. Removing it could stop new videos from loading.
-             */
-            if (section.querySelector(CONTINUATION_SELECTOR)) {
-                section.classList.remove(EMPTY_SECTION_CLASS);
-                continue;
-            }
+        refillTimer =
+            window.setTimeout(() => {
+                const root =
+                    document.scrollingElement ||
+                    document.documentElement;
 
-            const cards = Array.from(
-                section.querySelectorAll(CARD_SELECTOR)
-            );
+                if (!root) {
+                    return;
+                }
 
-            if (cards.length === 0) {
-                section.classList.remove(EMPTY_SECTION_CLASS);
-                continue;
-            }
+                const continuation =
+                    document.querySelector(
+                        CONTINUATION_SELECTOR
+                    );
 
-            const hasVisibleCard =
-                cards.some(cardIsActuallyVisible);
+                const continuationNearViewport =
+                    continuation &&
+                    continuation
+                        .getBoundingClientRect()
+                        .top <
+                        window.innerHeight *
+                            2.5;
 
-            section.classList.toggle(
-                EMPTY_SECTION_CLASS,
-                !hasVisibleCard
-            );
-        }
-    }
+                const distanceFromBottom =
+                    root.scrollHeight -
+                    root.scrollTop -
+                    window.innerHeight;
 
-    function pulseInfiniteScroll() {
-        window.clearTimeout(refillTimer);
+                const pageUnderfilled =
+                    root.scrollHeight <
+                    window.innerHeight *
+                        1.8;
 
-        refillTimer = window.setTimeout(() => {
-            const root =
-                document.scrollingElement ||
-                document.documentElement;
+                if (
+                    distanceFromBottom >
+                        window.innerHeight *
+                            2 &&
+                    !continuationNearViewport &&
+                    !pageUnderfilled
+                ) {
+                    return;
+                }
 
-            if (!root) {
-                return;
-            }
+                /*
+                 * A one-pixel movement causes Safari and YouTube's
+                 * IntersectionObserver to reevaluate the continuation
+                 * loader. The original position is restored immediately.
+                 *
+                 * This does not reload the page.
+                 */
+                const originalTop =
+                    root.scrollTop;
 
-            const distanceFromBottom =
-                root.scrollHeight -
-                (root.scrollTop + window.innerHeight);
+                window.scrollTo(
+                    0,
+                    originalTop + 1
+                );
 
-            const nearBottom =
-                distanceFromBottom < window.innerHeight * 2;
+                window.requestAnimationFrame(
+                    () => {
+                        window.scrollTo(
+                            0,
+                            originalTop
+                        );
 
-            const feedUnderfilled =
-                root.scrollHeight <= window.innerHeight * 1.5;
+                        window.dispatchEvent(
+                            new Event('scroll')
+                        );
 
-            if (!nearBottom && !feedUnderfilled) {
-                return;
-            }
+                        window.dispatchEvent(
+                            new Event('resize')
+                        );
 
-            /*
-             * YouTube normally loads another batch when its continuation
-             * element reaches the viewport. Hiding cards changes the
-             * layout, so these events encourage YouTube to recalculate
-             * whether more items need to load.
-             *
-             * This does not reload the page or change the scroll position.
-             */
-            window.dispatchEvent(new Event('scroll'));
-
-            document.dispatchEvent(
-                new Event('scroll', {
-                    bubbles: true
-                })
-            );
-
-            root.dispatchEvent(
-                new Event('scroll', {
-                    bubbles: true
-                })
-            );
-
-            window.requestAnimationFrame(() => {
-                window.dispatchEvent(new Event('resize'));
-                scheduleScan(250);
-            });
-        }, 120);
+                        scheduleScan(300);
+                    }
+                );
+            }, 120);
     }
 
     function scan() {
@@ -441,106 +779,111 @@
 
         injectStyle();
 
-        const newlyHidden = updateCards();
+        const hiddenCount =
+            hideWatchedCards();
 
-        updateEmptySections();
-
-        if (newlyHidden > 0) {
-            pulseInfiniteScroll();
+        if (hiddenCount > 0) {
+            nudgeInfiniteScroll();
         }
     }
 
-    function scheduleScan(delay = 90) {
-        window.clearTimeout(scanTimer);
-
-        scanTimer = window.setTimeout(
-            scan,
-            delay
+    function scheduleScan(
+        delay = 90
+    ) {
+        window.clearTimeout(
+            scanTimer
         );
+
+        scanTimer =
+            window.setTimeout(
+                scan,
+                delay
+            );
     }
 
-    function startObserver() {
-        if (!document.documentElement) {
-            window.setTimeout(startObserver, 20);
+    function start() {
+        injectStyle();
+
+        if (
+            !document.documentElement
+        ) {
+            window.setTimeout(
+                start,
+                20
+            );
+
             return;
         }
 
-        if (observer) {
-            observer.disconnect();
-        }
+        /*
+         * YouTube is a single-page application and continuously inserts
+         * feed items as you navigate and scroll.
+         */
+        const observer =
+            new MutationObserver(
+                () => scheduleScan()
+            );
 
-        observer = new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                if (
-                    mutation.type === 'childList' ||
-                    mutation.attributeName === 'style' ||
-                    mutation.attributeName === 'aria-valuenow' ||
-                    mutation.attributeName === 'data-progress' ||
-                    mutation.attributeName === 'data-percent'
-                ) {
-                    scheduleScan();
-                    return;
-                }
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [
+                    'style',
+                    'class',
+                    'aria-valuenow',
+                    'aria-valuemax',
+                    'data-progress',
+                    'data-percent'
+                ]
             }
-        });
-
-        observer.observe(document.documentElement, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: [
-                'style',
-                'aria-valuenow',
-                'data-progress',
-                'data-percent'
-            ]
-        });
+        );
 
         scheduleScan(0);
+
+        /*
+         * Some YouTube progress updates do not trigger a mutation that
+         * contains enough information, so periodically perform a light
+         * rescan while the tab is visible.
+         */
+        window.setInterval(() => {
+            if (!document.hidden) {
+                scheduleScan(0);
+            }
+        }, 1800);
     }
 
-    injectStyle();
-    startObserver();
+    start();
 
     /*
-     * YouTube switches between pages without performing a full browser
-     * reload, so listen for its internal navigation events.
+     * YouTube navigation often happens without a normal page refresh.
      */
-    document.addEventListener(
+    const navigationEvents = [
         'yt-navigate-finish',
-        () => scheduleScan(50),
-        true
-    );
-
-    document.addEventListener(
         'yt-page-data-updated',
-        () => scheduleScan(50),
-        true
-    );
-
-    window.addEventListener(
+        'yt-action',
         'popstate',
-        () => scheduleScan(50),
-        true
-    );
+        'pageshow'
+    ];
 
-    window.addEventListener(
-        'pageshow',
-        () => scheduleScan(50),
-        true
-    );
-
-    window.addEventListener(
-        'resize',
-        () => scheduleScan(150),
-        true
-    );
+    for (
+        const eventName of
+        navigationEvents
+    ) {
+        window.addEventListener(
+            eventName,
+            () => scheduleScan(40),
+            true
+        );
+    }
 
     document.addEventListener(
         'visibilitychange',
         () => {
             if (!document.hidden) {
-                scheduleScan(50);
+                scheduleScan(40);
             }
         }
     );
