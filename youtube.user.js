@@ -1,252 +1,90 @@
 // ==UserScript==
-// @name         Export Current YouTube HTML - Mobile Safari
+// @name         Hide 100% Watched YouTube Videos - iPhone Safari
 // @namespace    https://coopernorman.com/userscripts
-// @version      1.1.0
-// @description  Exports the currently rendered YouTube DOM as an HTML file for troubleshooting.
+// @version      3.0.0
+// @description  Hides fully watched videos throughout YouTube's mobile web interface and nudges infinite scrolling to load replacements.
 // @match        https://m.youtube.com/*
 // @match        https://www.youtube.com/*
 // @grant        none
-// @run-at       document-end
+// @run-at       document-start
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    const BUTTON_ID = 'cn-export-youtube-html-button';
-    const STYLE_ID = 'cn-export-youtube-html-style';
+    /*
+     * YouTube uses exactly 100% in the exported mobile DOM.
+     * A tiny tolerance handles possible rendering/rounding variations.
+     */
+    const COMPLETE_PERCENT = 99.9;
 
-    let exporting = false;
-
-    function makeTimestamp() {
-        return new Date()
-            .toISOString()
-            .replace(/[:.]/g, '-');
-    }
+    const HIDDEN_CLASS = 'cn-hide-fully-watched-video';
+    const STYLE_ID = 'cn-hide-fully-watched-video-style';
 
     /*
-     * Normal outerHTML does not include open Shadow DOM.
+     * The first selector is the exact progress element found in your
+     * exported iPhone Safari HTML.
      *
-     * This places a copy of any accessible open shadow root inside
-     * a template element so it will appear in the exported file.
+     * The remaining selectors are fallbacks for other YouTube layouts
+     * and future A/B-tested progress-bar renderers.
      */
-    function includeOpenShadowRoots(sourceRoot, clonedRoot) {
-        const sourceElements = [
-            sourceRoot,
-            ...sourceRoot.querySelectorAll('*')
-        ];
+    const PROGRESS_SELECTOR = [
+        '.YtmThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress',
 
-        const clonedElements = [
-            clonedRoot,
-            ...clonedRoot.querySelectorAll('*')
-        ];
+        '[class*="ThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress"]',
 
-        const total = Math.min(
-            sourceElements.length,
-            clonedElements.length
-        );
+        '.ytThumbnailOverlayProgressBarHostWatchedProgressBarSegment',
+        '.ytThumbnailOverlayProgressBarHostWatchedProgressBarSegmentModern',
+        '[class*="WatchedProgressBarSegment"]',
 
-        for (let index = 0; index < total; index += 1) {
-            const sourceElement = sourceElements[index];
-            const clonedElement = clonedElements[index];
+        'ytm-thumbnail-overlay-resume-playback-renderer #progress',
+        'ytd-thumbnail-overlay-resume-playback-renderer #progress',
 
-            if (!sourceElement.shadowRoot) {
-                continue;
-            }
+        '[role="progressbar"][aria-valuenow]'
+    ].join(',');
 
-            const template = document.createElement('template');
-
-            template.setAttribute(
-                'data-exported-open-shadow-root',
-                'true'
-            );
-
-            template.innerHTML =
-                sourceElement.shadowRoot.innerHTML;
-
-            clonedElement.prepend(template);
-        }
-    }
-
-    function buildHtmlSnapshot() {
-        const clonedDocument =
-            document.documentElement.cloneNode(true);
-
-        includeOpenShadowRoots(
-            document.documentElement,
-            clonedDocument
-        );
+    /*
+     * Ordered from the complete outer video card to smaller fallback
+     * containers.
+     *
+     * Selecting ytm-rich-item-renderer first removes the thumbnail,
+     * title, channel information, menu button, margins, and reserved
+     * feed space.
+     */
+    const CARD_SELECTORS = [
+        'ytm-rich-item-renderer',
+        'ytm-video-with-context-renderer',
+        'ytm-compact-video-renderer',
+        'ytm-grid-video-renderer',
+        'ytm-playlist-video-renderer',
+        'ytm-video-card-renderer',
+        'ytm-media-item',
+        'yt-lockup-view-model',
 
         /*
-         * Remove this exporter's controls from the snapshot.
+         * Desktop-layout fallbacks in case Safari is displaying
+         * www.youtube.com rather than the mobile renderer.
          */
-        clonedDocument
-            .querySelectorAll(
-                `#${BUTTON_ID}, #${STYLE_ID}`
-            )
-            .forEach((element) => element.remove());
+        'ytd-rich-item-renderer',
+        'ytd-video-renderer',
+        'ytd-compact-video-renderer',
+        'ytd-grid-video-renderer',
+        'ytd-playlist-video-renderer',
+        'ytd-playlist-panel-video-renderer'
+    ];
 
-        /*
-         * Remove executable scripts. They are not needed to inspect
-         * the rendered video-card structure and can make the file
-         * substantially larger.
-         */
-        clonedDocument
-            .querySelectorAll('script, noscript')
-            .forEach((element) => element.remove());
+    const CARD_SELECTOR =
+        CARD_SELECTORS.join(',');
 
-        const captureDetails = [
-            'YouTube mobile DOM snapshot',
-            `Captured: ${new Date().toISOString()}`,
-            `URL: ${location.href}`,
-            `Viewport: ${window.innerWidth}x${window.innerHeight}`,
-            `User agent: ${navigator.userAgent}`
-        ].join('\n');
+    const CONTINUATION_SELECTOR = [
+        'ytm-continuation-item-renderer',
+        'ytd-continuation-item-renderer',
+        'continuation-item-renderer'
+    ].join(',');
 
-        return [
-            '<!DOCTYPE html>',
-            `<!--\n${captureDetails}\n-->`,
-            clonedDocument.outerHTML
-        ].join('\n');
-    }
-
-    function downloadFile(blob, filename) {
-        const objectUrl =
-            URL.createObjectURL(blob);
-
-        const link =
-            document.createElement('a');
-
-        link.href = objectUrl;
-        link.download = filename;
-        link.style.display = 'none';
-
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        window.setTimeout(() => {
-            URL.revokeObjectURL(objectUrl);
-        }, 60000);
-    }
-
-    async function exportHtml(button) {
-        if (exporting) {
-            return;
-        }
-
-        exporting = true;
-        button.disabled = true;
-        button.textContent = 'Preparing HTML…';
-
-        try {
-            const html =
-                buildHtmlSnapshot();
-
-            const filename =
-                `youtube-mobile-dom-${makeTimestamp()}.html`;
-
-            const blob = new Blob(
-                [html],
-                {
-                    type: 'text/html;charset=utf-8'
-                }
-            );
-
-            /*
-             * The iPhone Share Sheet is generally the easiest way to
-             * save the file to Files. Fall back to a normal browser
-             * download when file sharing is unavailable.
-             */
-            if (
-                typeof File === 'function' &&
-                typeof navigator.share === 'function'
-            ) {
-                const file = new File(
-                    [blob],
-                    filename,
-                    {
-                        type: 'text/html'
-                    }
-                );
-
-                const shareData = {
-                    files: [file],
-                    title: 'YouTube DOM Snapshot'
-                };
-
-                const canShareFile =
-                    typeof navigator.canShare !== 'function' ||
-                    navigator.canShare(shareData);
-
-                if (canShareFile) {
-                    try {
-                        button.textContent = 'Opening Share Sheet…';
-
-                        await navigator.share(shareData);
-
-                        button.textContent = 'HTML exported';
-
-                        window.setTimeout(() => {
-                            button.textContent =
-                                'Export YouTube HTML';
-                        }, 2000);
-
-                        return;
-                    } catch (error) {
-                        /*
-                         * Do not automatically download when the user
-                         * intentionally closes the Share Sheet.
-                         */
-                        if (error?.name === 'AbortError') {
-                            button.textContent =
-                                'Export cancelled';
-
-                            window.setTimeout(() => {
-                                button.textContent =
-                                    'Export YouTube HTML';
-                            }, 1500);
-
-                            return;
-                        }
-
-                        console.warn(
-                            'Share Sheet export failed; using download fallback.',
-                            error
-                        );
-                    }
-                }
-            }
-
-            button.textContent = 'Downloading HTML…';
-
-            downloadFile(
-                blob,
-                filename
-            );
-
-            button.textContent = 'HTML downloaded';
-
-            window.setTimeout(() => {
-                button.textContent =
-                    'Export YouTube HTML';
-            }, 2000);
-        } catch (error) {
-            console.error(
-                'Unable to export YouTube HTML:',
-                error
-            );
-
-            button.textContent = 'Export failed';
-
-            window.setTimeout(() => {
-                button.textContent =
-                    'Export YouTube HTML';
-            }, 2000);
-        } finally {
-            exporting = false;
-            button.disabled = false;
-        }
-    }
+    let scanTimer = 0;
+    let refillTimer = 0;
+    let refillAttempts = 0;
 
     function injectStyle() {
         if (document.getElementById(STYLE_ID)) {
@@ -258,98 +96,614 @@
 
         style.id = STYLE_ID;
 
+        /*
+         * The :has() rules provide immediate hiding for the exact
+         * structure found in your exported mobile YouTube HTML.
+         *
+         * JavaScript below handles percentages such as 99.9%, other
+         * page layouts, and dynamically inserted cards.
+         */
         style.textContent = `
-            #${BUTTON_ID} {
-                position: fixed !important;
-                top: 92px !important;
-                left: 8px !important;
-                z-index: 2147483647 !important;
-
-                max-width: 190px !important;
-                padding: 10px 12px !important;
-
-                border: 2px solid white !important;
-                border-radius: 9px !important;
-
-                background: #b00020 !important;
-                color: white !important;
-
-                font-family:
-                    -apple-system,
-                    BlinkMacSystemFont,
-                    sans-serif !important;
-
-                font-size: 13px !important;
-                font-weight: 700 !important;
-                line-height: 1.2 !important;
-
-                box-shadow:
-                    0 3px 12px
-                    rgba(0, 0, 0, 0.55) !important;
-
-                opacity: 0.94 !important;
+            .${HIDDEN_CLASS} {
+                display: none !important;
             }
 
-            #${BUTTON_ID}:disabled {
-                opacity: 0.7 !important;
+            ytm-rich-item-renderer:has(
+                .YtmThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress[style*="width: 100%"]
+            ),
+
+            ytm-rich-item-renderer:has(
+                .YtmThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress[style*="width:100%"]
+            ),
+
+            ytm-video-with-context-renderer:has(
+                .YtmThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress[style*="width: 100%"]
+            ),
+
+            ytm-video-with-context-renderer:has(
+                .YtmThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress[style*="width:100%"]
+            ) {
+                display: none !important;
             }
         `;
 
-        (
+        const parent =
             document.head ||
-            document.documentElement
-        ).appendChild(style);
+            document.documentElement;
+
+        if (parent) {
+            parent.appendChild(style);
+        } else {
+            window.setTimeout(
+                injectStyle,
+                20
+            );
+        }
     }
 
-    function addButton() {
+    function parseNumber(value) {
+        const match = String(
+            value ?? ''
+        ).match(
+            /-?\d+(?:\.\d+)?/
+        );
+
+        if (!match) {
+            return null;
+        }
+
+        const number =
+            Number.parseFloat(match[0]);
+
+        return Number.isFinite(number)
+            ? number
+            : null;
+    }
+
+    function percentageFromTransform(transform) {
+        if (
+            !transform ||
+            transform === 'none'
+        ) {
+            return null;
+        }
+
+        /*
+         * Example:
+         *
+         * transform: scaleX(1)
+         */
+        const scaleX = transform.match(
+            /scaleX\(\s*(-?\d+(?:\.\d+)?)\s*\)/i
+        );
+
+        if (scaleX) {
+            const scale =
+                Number.parseFloat(scaleX[1]);
+
+            if (
+                Number.isFinite(scale) &&
+                scale >= 0 &&
+                scale <= 1.01
+            ) {
+                return scale * 100;
+            }
+        }
+
+        /*
+         * Browsers can return computed transforms as:
+         *
+         * matrix(scaleX, 0, 0, scaleY, x, y)
+         */
+        const matrix = transform.match(
+            /^matrix\(\s*(-?\d+(?:\.\d+)?)/i
+        );
+
+        if (matrix) {
+            const scale =
+                Number.parseFloat(matrix[1]);
+
+            if (
+                Number.isFinite(scale) &&
+                scale >= 0 &&
+                scale <= 1.01
+            ) {
+                return scale * 100;
+            }
+        }
+
+        return null;
+    }
+
+    function readProgressPercent(progress) {
+        /*
+         * Exact structure from your exported mobile DOM:
+         *
+         * style="width: 100%;"
+         */
+        const inlineWidth =
+            progress.style.width;
+
+        if (
+            inlineWidth &&
+            inlineWidth.trim().endsWith('%')
+        ) {
+            const percent =
+                parseNumber(inlineWidth);
+
+            if (percent !== null) {
+                return percent;
+            }
+        }
+
+        /*
+         * Read the raw style attribute in case Safari does not expose
+         * the value through element.style.width.
+         */
+        const styleAttribute =
+            progress.getAttribute('style') || '';
+
+        const widthMatch =
+            styleAttribute.match(
+                /(?:^|;)\s*width\s*:\s*(\d+(?:\.\d+)?)\s*%/i
+            );
+
+        if (widthMatch) {
+            return Number.parseFloat(
+                widthMatch[1]
+            );
+        }
+
+        /*
+         * Accessible progress-bar fallback.
+         */
+        const ariaNow = parseNumber(
+            progress.getAttribute(
+                'aria-valuenow'
+            )
+        );
+
+        const ariaMax = parseNumber(
+            progress.getAttribute(
+                'aria-valuemax'
+            )
+        );
+
+        if (ariaNow !== null) {
+            return (
+                ariaMax !== null &&
+                ariaMax > 0
+            )
+                ? (ariaNow / ariaMax) * 100
+                : ariaNow;
+        }
+
+        /*
+         * Possible data-attribute fallbacks.
+         */
+        const dataPercentValues = [
+            progress.getAttribute(
+                'data-progress'
+            ),
+            progress.getAttribute(
+                'data-percent'
+            ),
+            progress.getAttribute(
+                'data-percentage'
+            )
+        ];
+
+        for (
+            const value of
+            dataPercentValues
+        ) {
+            const percent =
+                parseNumber(value);
+
+            if (
+                percent !== null &&
+                percent >= 0 &&
+                percent <= 101
+            ) {
+                return percent;
+            }
+        }
+
+        /*
+         * Transform-based progress fallback.
+         */
+        const transformed =
+            percentageFromTransform(
+                progress.style.transform
+            ) ??
+            percentageFromTransform(
+                window.getComputedStyle(
+                    progress
+                ).transform
+            );
+
+        if (transformed !== null) {
+            return transformed;
+        }
+
+        /*
+         * Pixel-width fallback for layouts that do not expose a
+         * percentage directly.
+         */
+        const barRect =
+            progress.getBoundingClientRect();
+
+        let track =
+            progress.parentElement;
+
+        for (
+            let depth = 0;
+            track && depth < 4;
+            depth += 1
+        ) {
+            const trackRect =
+                track.getBoundingClientRect();
+
+            if (
+                barRect.width > 0 &&
+                trackRect.width > 0 &&
+                trackRect.width >=
+                    barRect.width &&
+                trackRect.height <= 20
+            ) {
+                return (
+                    barRect.width /
+                    trackRect.width
+                ) * 100;
+            }
+
+            track =
+                track.parentElement;
+        }
+
+        return null;
+    }
+
+    function findCard(element) {
+        for (
+            const selector of
+            CARD_SELECTORS
+        ) {
+            const card =
+                element.closest(selector);
+
+            if (card) {
+                return card;
+            }
+        }
+
+        return null;
+    }
+
+    function cardIsFullyWatched(card) {
+        const progressBars =
+            card.querySelectorAll(
+                PROGRESS_SELECTOR
+            );
+
+        for (
+            const progress of
+            progressBars
+        ) {
+            const percent =
+                readProgressPercent(progress);
+
+            if (
+                percent !== null &&
+                percent >= COMPLETE_PERCENT
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function updateCards() {
+        const cards = new Set(
+            document.querySelectorAll(
+                CARD_SELECTOR
+            )
+        );
+
+        /*
+         * Also work outward from progress elements. This helps if
+         * YouTube introduces another outer card element that is not
+         * included in CARD_SELECTORS.
+         */
+        const progressElements =
+            document.querySelectorAll(
+                PROGRESS_SELECTOR
+            );
+
+        for (
+            const progress of
+            progressElements
+        ) {
+            const card =
+                findCard(progress);
+
+            if (card) {
+                cards.add(card);
+            }
+        }
+
+        let newlyHidden = 0;
+
+        for (const card of cards) {
+            const shouldHide =
+                cardIsFullyWatched(card);
+
+            const isHidden =
+                card.classList.contains(
+                    HIDDEN_CLASS
+                );
+
+            if (
+                shouldHide &&
+                !isHidden
+            ) {
+                card.classList.add(
+                    HIDDEN_CLASS
+                );
+
+                newlyHidden += 1;
+            } else if (
+                !shouldHide &&
+                isHidden
+            ) {
+                /*
+                 * YouTube can recycle an existing card element for a
+                 * different video while navigating or scrolling.
+                 */
+                card.classList.remove(
+                    HIDDEN_CLASS
+                );
+            }
+        }
+
+        return newlyHidden;
+    }
+
+    function nudgeContinuationLoader() {
+        window.clearTimeout(
+            refillTimer
+        );
+
+        refillTimer =
+            window.setTimeout(() => {
+                const continuation =
+                    document.querySelector(
+                        CONTINUATION_SELECTOR
+                    );
+
+                if (!continuation) {
+                    return;
+                }
+
+                const root =
+                    document.scrollingElement ||
+                    document.documentElement;
+
+                const continuationRect =
+                    continuation
+                        .getBoundingClientRect();
+
+                const pageIsShort =
+                    root.scrollHeight <=
+                    window.innerHeight * 2.2;
+
+                const loaderIsNear =
+                    continuationRect.top <=
+                    window.innerHeight * 2.2;
+
+                if (
+                    !pageIsShort &&
+                    !loaderIsNear
+                ) {
+                    return;
+                }
+
+                /*
+                 * YouTube loads another batch when its continuation
+                 * element approaches the viewport.
+                 *
+                 * Hiding watched videos moves that loader upward.
+                 * These events and an imperceptible one-pixel movement
+                 * make Safari recalculate the loader without refreshing
+                 * the page or changing your location in the feed.
+                 */
+                const originalY =
+                    window.scrollY;
+
+                window.dispatchEvent(
+                    new Event('scroll')
+                );
+
+                document.dispatchEvent(
+                    new Event(
+                        'scroll',
+                        {
+                            bubbles: true
+                        }
+                    )
+                );
+
+                window.dispatchEvent(
+                    new Event('resize')
+                );
+
+                window.scrollTo(
+                    0,
+                    originalY + 1
+                );
+
+                window.requestAnimationFrame(
+                    () => {
+                        window.scrollTo(
+                            0,
+                            originalY
+                        );
+
+                        window.dispatchEvent(
+                            new Event('scroll')
+                        );
+                    }
+                );
+
+                /*
+                 * Allow several passes in case the next batch also
+                 * contains mostly completed videos.
+                 */
+                if (refillAttempts < 8) {
+                    refillAttempts += 1;
+                    scheduleScan(500);
+                }
+            }, 100);
+    }
+
+    function scan() {
+        scanTimer = 0;
+
         injectStyle();
 
-        if (document.getElementById(BUTTON_ID)) {
+        const newlyHidden =
+            updateCards();
+
+        if (newlyHidden > 0) {
+            refillAttempts = 0;
+            nudgeContinuationLoader();
+        } else if (
+            refillAttempts > 0 &&
+            refillAttempts < 8
+        ) {
+            nudgeContinuationLoader();
+        }
+    }
+
+    function scheduleScan(
+        delay = 60
+    ) {
+        window.clearTimeout(
+            scanTimer
+        );
+
+        scanTimer =
+            window.setTimeout(
+                scan,
+                delay
+            );
+    }
+
+    function resetForNavigation() {
+        refillAttempts = 0;
+        scheduleScan(40);
+    }
+
+    function start() {
+        injectStyle();
+
+        if (!document.documentElement) {
+            window.setTimeout(
+                start,
+                20
+            );
+
             return;
         }
 
-        const button =
-            document.createElement('button');
+        /*
+         * YouTube is a single-page application. This watches for:
+         *
+         * - Newly inserted feed cards
+         * - Infinite-scroll results
+         * - Progress percentages being updated
+         * - Navigation between Home, Subscriptions, search, and channels
+         */
+        const observer =
+            new MutationObserver(
+                (mutations) => {
+                    for (
+                        const mutation of
+                        mutations
+                    ) {
+                        if (
+                            mutation.type ===
+                                'childList' ||
+                            mutation.attributeName ===
+                                'style' ||
+                            mutation.attributeName ===
+                                'aria-valuenow' ||
+                            mutation.attributeName ===
+                                'aria-valuemax'
+                        ) {
+                            scheduleScan();
+                            return;
+                        }
+                    }
+                }
+            );
 
-        button.id = BUTTON_ID;
-        button.type = 'button';
-        button.textContent = 'Export YouTube HTML';
-
-        button.addEventListener(
-            'click',
-            (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-
-                exportHtml(button);
-            },
-            true
+        observer.observe(
+            document.documentElement,
+            {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [
+                    'style',
+                    'aria-valuenow',
+                    'aria-valuemax',
+                    'data-progress',
+                    'data-percent',
+                    'data-percentage'
+                ]
+            }
         );
 
-        (
-            document.body ||
-            document.documentElement
-        ).appendChild(button);
+        scheduleScan(0);
     }
 
-    addButton();
+    start();
 
     /*
-     * Restore the button if YouTube removes it while navigating.
+     * YouTube navigation usually occurs without a full browser reload.
      */
-    const observer =
-        new MutationObserver(addButton);
-
-    observer.observe(
-        document.documentElement,
-        {
-            childList: true,
-            subtree: true
-        }
+    document.addEventListener(
+        'yt-navigate-finish',
+        resetForNavigation,
+        true
     );
 
-    window.setInterval(
-        addButton,
-        2000
+    document.addEventListener(
+        'yt-page-data-updated',
+        resetForNavigation,
+        true
+    );
+
+    window.addEventListener(
+        'popstate',
+        resetForNavigation,
+        true
+    );
+
+    window.addEventListener(
+        'pageshow',
+        resetForNavigation,
+        true
+    );
+
+    document.addEventListener(
+        'visibilitychange',
+        () => {
+            if (!document.hidden) {
+                resetForNavigation();
+            }
+        }
     );
 })();
