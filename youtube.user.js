@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Hide YouTube Shorts & Playables (Mobile Safari)
-// @namespace    http://tampermonkey.net
-// @version      2.0
-// @description  Removes YouTube Shorts from feeds/navigation and hides YouTube Playables on mobile YouTube.
+// @name         Hide Fully Watched YouTube Videos (Mobile Safari)
+// @namespace    https://coopernorman.com/userscripts
+// @version      1.0.0
+// @description  Hides videos that YouTube marks as fully watched across mobile and desktop-layout pages, including Subscriptions.
 // @match        https://m.youtube.com/*
 // @match        https://www.youtube.com/*
 // @grant        none
@@ -12,307 +12,536 @@
 (function () {
     'use strict';
 
-    const HIDDEN_CLASS = 'cn-hide-youtube-content';
+    /*
+     * Hide only completed videos.
+     *
+     * The small tolerance accounts for fractional pixel/rendering math
+     * where a visually complete 100% progress bar may measure as 99.99%.
+     */
+    const FULLY_WATCHED_THRESHOLD = 100;
+    const RENDERING_TOLERANCE = 0.05;
 
-    const css = `
-        /* Elements hidden by the JavaScript fallbacks */
-        .${HIDDEN_CLASS} {
-            display: none !important;
-        }
+    const HIDDEN_CLASS = 'cn-fully-watched-video-hidden';
+    const EMPTY_SECTION_CLASS = 'cn-empty-watched-section-hidden';
+    const STYLE_ID = 'cn-hide-fully-watched-youtube-style';
 
-        /* =========================================================
-           MOBILE YOUTUBE: SHORTS
-           ========================================================= */
+    /*
+     * These are thumbnail progress indicators, not the progress bar
+     * inside the video player itself.
+     */
+    const PROGRESS_SELECTOR = [
+        '.ytThumbnailOverlayProgressBarHostWatchedProgressBarSegment',
+        '[class*="ThumbnailOverlayProgressBarHostWatchedProgressBarSegment"]',
+        'ytm-thumbnail-overlay-resume-playback-renderer .thumbnail-overlay-resume-playback-progress',
+        'ytm-thumbnail-overlay-resume-playback-renderer [class*="resume-playback-progress"]',
+        'ytd-thumbnail-overlay-resume-playback-renderer #progress',
+        'yt-thumbnail-overlay-progress-bar-view-model [role="progressbar"]',
+        'ytm-thumbnail-overlay-resume-playback-renderer [role="progressbar"]',
+        'ytd-thumbnail-overlay-resume-playback-renderer [role="progressbar"]'
+    ].join(',');
 
-        /* Hide the Shorts button from the bottom navigation bar */
-        ytm-pivot-bar-item-renderer:has(.pivot-shorts),
-        ytm-pivot-bar-item-renderer:has(a[href^="/shorts"]),
-        ytm-pivot-bar-item-renderer[data-pivot-id="shorts"] {
-            display: none !important;
-        }
+    /*
+     * Video-card wrappers used by mobile and desktop-layout YouTube.
+     */
+    const CARD_SELECTORS = [
+        'ytm-rich-item-renderer',
+        'ytm-video-with-context-renderer',
+        'ytm-compact-video-renderer',
+        'ytm-playlist-video-renderer',
+        'ytm-grid-video-renderer',
+        'ytm-video-card-renderer',
+        'ytm-media-item',
+        'ytd-rich-item-renderer',
+        'ytd-video-renderer',
+        'ytd-compact-video-renderer',
+        'ytd-grid-video-renderer',
+        'ytd-playlist-video-renderer',
+        'ytd-playlist-panel-video-renderer',
+        'yt-lockup-view-model'
+    ];
 
-        /*
-         * Hide complete Shorts shelves.
-         * Targeting the parent rich section also removes the Shorts
-         * heading, divider, carousel and any surrounding empty space.
-         */
-        ytm-rich-section-renderer:has(ytm-reel-shelf-renderer),
-        ytm-rich-section-renderer:has(ytm-shorts-lockup-view-model),
-        ytm-rich-section-renderer:has(ytm-shorts-lockup-view-model-v2),
-        grid-shelf-view-model:has(ytm-shorts-lockup-view-model),
-        grid-shelf-view-model:has(ytm-shorts-lockup-view-model-v2),
-        ytm-reel-shelf-renderer {
-            display: none !important;
-        }
+    const CARD_SELECTOR = CARD_SELECTORS.join(',');
 
-        /* Hide individual Shorts in feeds, search and recommendations */
-        ytm-shorts-lockup-view-model,
-        ytm-shorts-lockup-view-model-v2,
-        ytm-rich-item-renderer:has(ytm-shorts-lockup-view-model),
-        ytm-rich-item-renderer:has(ytm-shorts-lockup-view-model-v2),
-        ytm-rich-item-renderer:has(a[href^="/shorts/"]),
-        ytm-video-with-context-renderer:has([data-style="SHORTS"]),
-        ytm-video-with-context-renderer:has(a[href^="/shorts/"]),
-        yt-lockup-view-model:has(a[href^="/shorts/"]) {
-            display: none !important;
-        }
+    const SECTION_SELECTOR = [
+        'ytm-rich-section-renderer',
+        'ytm-shelf-renderer',
+        'ytm-item-section-renderer',
+        'grid-shelf-view-model',
+        'ytd-rich-section-renderer',
+        'ytd-shelf-renderer',
+        'ytd-item-section-renderer'
+    ].join(',');
 
-        /* Hide Shorts channel tabs and filter chips */
-        yt-tab-shape[tab-title="Shorts"],
-        [tab-title="Shorts"],
-        .single-column-browse-results-tabs > a[href*="/shorts"],
-        ytm-chip-cloud-chip-renderer:has([aria-label="Shorts"]),
-        ytm-chip-cloud-chip-renderer:has(a[href*="/shorts"]) {
-            display: none !important;
-        }
+    const CONTINUATION_SELECTOR = [
+        'ytm-continuation-item-renderer',
+        'ytd-continuation-item-renderer',
+        'continuation-item-renderer'
+    ].join(',');
 
-        /* =========================================================
-           MOBILE YOUTUBE: PLAYABLES
-           ========================================================= */
-
-        /*
-         * Hide the entire Playables section, including its title,
-         * header row, games and surrounding spacing.
-         */
-        ytm-rich-shelf-renderer[is-playables],
-        ytm-rich-section-renderer:has(ytm-rich-shelf-renderer[is-playables]),
-        ytm-rich-section-renderer:has([is-playables]),
-        ytm-rich-section-renderer:has(a[href*="/playables"]),
-        ytm-shelf-renderer:has(a[href*="/playables"]),
-        grid-shelf-view-model:has(a[href*="/playables"]),
-        ytm-statement-banner-renderer:has(a[href*="/playables"]) {
-            display: none !important;
-        }
-
-        /* =========================================================
-           DESKTOP-LAYOUT FALLBACKS
-           These help if Safari loads the desktop YouTube layout.
-           ========================================================= */
-
-        ytd-reel-shelf-renderer,
-        ytd-rich-section-renderer:has(ytd-reel-shelf-renderer),
-        ytd-rich-shelf-renderer[is-shorts],
-        ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
-        ytd-rich-item-renderer:has(a[href^="/shorts/"]),
-        ytd-video-renderer:has([overlay-style="SHORTS"]),
-        ytd-guide-entry-renderer:has(a[href^="/shorts"]),
-        ytd-mini-guide-entry-renderer:has(a[href^="/shorts"]),
-        ytd-rich-shelf-renderer[is-playables],
-        ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-playables]),
-        ytd-rich-section-renderer:has(a[href*="/playables"]) {
-            display: none !important;
-        }
-    `;
+    let scanTimer = 0;
+    let refillTimer = 0;
+    let observer = null;
 
     function injectStyle() {
-        if (document.getElementById('cn-hide-youtube-style')) {
+        if (document.getElementById(STYLE_ID)) {
             return;
         }
 
         const style = document.createElement('style');
-        style.id = 'cn-hide-youtube-style';
-        style.textContent = css;
+        style.id = STYLE_ID;
+
+        style.textContent = `
+            .${HIDDEN_CLASS},
+            .${EMPTY_SECTION_CLASS} {
+                display: none !important;
+            }
+        `;
 
         const parent = document.head || document.documentElement;
 
         if (parent) {
             parent.appendChild(style);
         } else {
-            setTimeout(injectStyle, 25);
+            window.setTimeout(injectStyle, 20);
         }
     }
 
-    function hide(element) {
-        if (element instanceof Element) {
-            element.classList.add(HIDDEN_CLASS);
+    function parsePercentage(value) {
+        if (value === null || value === undefined) {
+            return null;
         }
+
+        const match = String(value).match(/-?\d+(?:\.\d+)?/);
+
+        if (!match) {
+            return null;
+        }
+
+        const number = Number.parseFloat(match[0]);
+
+        return Number.isFinite(number) ? number : null;
     }
 
-    function normalizedText(element) {
-        return (element?.textContent || '')
-            .replace(/\s+/g, ' ')
-            .trim();
+    function percentageFromTransform(transform) {
+        if (!transform || transform === 'none') {
+            return null;
+        }
+
+        /*
+         * matrix(a, b, c, d, tx, ty)
+         *
+         * The first value, "a", is the horizontal scale.
+         */
+        const matrix = transform.match(
+            /^matrix\(\s*(-?\d+(?:\.\d+)?)/i
+        );
+
+        if (matrix) {
+            const scaleX = Number.parseFloat(matrix[1]);
+
+            if (
+                Number.isFinite(scaleX) &&
+                scaleX >= 0 &&
+                scaleX <= 1.001
+            ) {
+                return scaleX * 100;
+            }
+        }
+
+        const scale = transform.match(
+            /scaleX\(\s*(-?\d+(?:\.\d+)?)\s*\)/i
+        );
+
+        if (scale) {
+            const scaleX = Number.parseFloat(scale[1]);
+
+            if (
+                Number.isFinite(scaleX) &&
+                scaleX >= 0 &&
+                scaleX <= 1.001
+            ) {
+                return scaleX * 100;
+            }
+        }
+
+        return null;
     }
 
-    /*
-     * YouTube frequently changes or A/B-tests its renderer structure.
-     * This fallback finds shelves whose heading is Shorts or Playables,
-     * even if the surrounding custom-element name changes.
-     */
-    function hideSectionsByHeading() {
-        const sections = document.querySelectorAll([
-            'ytm-rich-section-renderer',
-            'ytm-reel-shelf-renderer',
-            'ytm-shelf-renderer',
-            'grid-shelf-view-model',
-            'ytd-rich-section-renderer',
-            'ytd-shelf-renderer'
-        ].join(','));
+    function readProgressPercentage(progressElement) {
+        const directValues = [
+            progressElement.getAttribute('aria-valuenow'),
+            progressElement.getAttribute('data-progress'),
+            progressElement.getAttribute('data-percent'),
+            progressElement.style.getPropertyValue('--progress'),
+            progressElement.style.getPropertyValue('--progress-percent')
+        ];
 
-        const unwantedHeading =
-            /^(?:youtube\s+)?(?:shorts|playables)(?:\b|\s*[-–—:])/i;
+        for (const value of directValues) {
+            const percentage = parsePercentage(value);
 
-        const headingSelectors = [
-            ':scope > h1',
-            ':scope > h2',
-            ':scope > h3',
-            ':scope > [role="heading"]',
-            '#header h1',
-            '#header h2',
-            '#header h3',
-            '#header [role="heading"]',
-            'ytm-shelf-header-renderer',
-            '.reel-shelf-title-wrapper',
-            '.rich-shelf-header'
-        ].join(',');
+            if (
+                percentage !== null &&
+                percentage >= 0 &&
+                percentage <= 100.5
+            ) {
+                return percentage;
+            }
+        }
 
-        for (const section of sections) {
-            const headings = section.querySelectorAll(headingSelectors);
+        /*
+         * Check for an inline width such as:
+         *
+         * style="width: 100%"
+         */
+        const inlineStyle =
+            progressElement.getAttribute('style') || '';
 
-            for (const heading of headings) {
-                const text = normalizedText(heading);
+        const widthMatch = inlineStyle.match(
+            /(?:^|;)\s*width\s*:\s*(\d+(?:\.\d+)?)%/i
+        );
+
+        if (widthMatch) {
+            return Number.parseFloat(widthMatch[1]);
+        }
+
+        /*
+         * Check for an inline scaleX transform.
+         */
+        const inlineTransform = percentageFromTransform(
+            progressElement.style.transform
+        );
+
+        if (inlineTransform !== null) {
+            return inlineTransform;
+        }
+
+        /*
+         * Some YouTube layouts use pixel widths rather than percentage
+         * values. Compare the progress element with its parent track.
+         */
+        const parent = progressElement.parentElement;
+
+        if (parent) {
+            const progressRect =
+                progressElement.getBoundingClientRect();
+
+            const parentRect =
+                parent.getBoundingClientRect();
+
+            if (
+                progressRect.width > 0 &&
+                parentRect.width > 0
+            ) {
+                const percentage =
+                    (progressRect.width / parentRect.width) * 100;
 
                 if (
-                    text.length <= 100 &&
-                    unwantedHeading.test(text)
+                    percentage >= 0 &&
+                    percentage <= 101
                 ) {
-                    hide(section);
-                    break;
+                    return percentage;
                 }
             }
         }
-    }
 
-    /*
-     * Find links to Shorts and hide their complete card or navigation
-     * container rather than hiding only the clickable link.
-     */
-    function hideShortsLinkContainers() {
-        const links = document.querySelectorAll(
-            'a[href^="/shorts/"], a[href*="youtube.com/shorts/"]'
+        /*
+         * Finally, check the computed transform supplied by YouTube's
+         * styles rather than directly in the element's style attribute.
+         */
+        const computedTransform = percentageFromTransform(
+            window.getComputedStyle(progressElement).transform
         );
 
-        const cardSelector = [
-            'ytm-pivot-bar-item-renderer',
-            'ytm-rich-item-renderer',
-            'ytm-video-with-context-renderer',
-            'ytm-reel-item-renderer',
-            'ytm-shorts-lockup-view-model',
-            'ytm-shorts-lockup-view-model-v2',
-            'yt-lockup-view-model',
-            'ytd-rich-item-renderer',
-            'ytd-video-renderer',
-            'ytd-grid-video-renderer',
-            'ytd-guide-entry-renderer',
-            'ytd-mini-guide-entry-renderer'
-        ].join(',');
+        if (computedTransform !== null) {
+            return computedTransform;
+        }
 
-        for (const link of links) {
-            const card = link.closest(cardSelector);
+        return null;
+    }
+
+    function findBestCard(element) {
+        for (const selector of CARD_SELECTORS) {
+            const card = element.closest(selector);
 
             if (card) {
-                hide(card);
+                return card;
             }
         }
+
+        /*
+         * Last-resort wrappers for occasional YouTube experiments.
+         */
+        return element.closest('li, article');
     }
 
-    /*
-     * Find Playables links and hide their entire shelf or section,
-     * including the header.
-     */
-    function hidePlayablesLinkContainers() {
-        const links = document.querySelectorAll(
-            'a[href*="/playables"], a[href*="youtube.com/playables"]'
+    function cardIsFullyWatched(card) {
+        const progressElements =
+            card.querySelectorAll(PROGRESS_SELECTOR);
+
+        for (const progressElement of progressElements) {
+            const percentage =
+                readProgressPercentage(progressElement);
+
+            if (
+                percentage !== null &&
+                percentage + RENDERING_TOLERANCE >=
+                    FULLY_WATCHED_THRESHOLD
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function collectCards() {
+        const cards = new Set(
+            document.querySelectorAll(CARD_SELECTOR)
         );
 
-        const sectionSelector = [
-            'ytm-rich-section-renderer',
-            'ytm-rich-shelf-renderer',
-            'ytm-shelf-renderer',
-            'grid-shelf-view-model',
-            'ytm-statement-banner-renderer',
-            'ytd-rich-section-renderer',
-            'ytd-rich-shelf-renderer',
-            'ytd-shelf-renderer'
-        ].join(',');
+        /*
+         * Work outward from every known progress bar. This allows the
+         * script to handle some newly tested YouTube card wrappers even
+         * when their custom-element name is not listed above.
+         */
+        for (
+            const progressElement of
+            document.querySelectorAll(PROGRESS_SELECTOR)
+        ) {
+            const card = findBestCard(progressElement);
 
-        for (const link of links) {
-            const section = link.closest(sectionSelector);
-
-            if (section) {
-                hide(section);
+            if (card) {
+                cards.add(card);
             }
         }
+
+        return cards;
     }
 
-    function cleanPage() {
+    function updateCards() {
+        let newlyHidden = 0;
+
+        for (const card of collectCards()) {
+            const shouldHide = cardIsFullyWatched(card);
+            const wasHidden =
+                card.classList.contains(HIDDEN_CLASS);
+
+            if (shouldHide !== wasHidden) {
+                card.classList.toggle(
+                    HIDDEN_CLASS,
+                    shouldHide
+                );
+
+                if (shouldHide) {
+                    newlyHidden += 1;
+                }
+            }
+        }
+
+        return newlyHidden;
+    }
+
+    function cardIsActuallyVisible(card) {
+        return (
+            !card.classList.contains(HIDDEN_CLASS) &&
+            !card.closest(`.${HIDDEN_CLASS}`)
+        );
+    }
+
+    function updateEmptySections() {
+        for (
+            const section of
+            document.querySelectorAll(SECTION_SELECTOR)
+        ) {
+            /*
+             * Do not hide a container that owns YouTube's infinite-scroll
+             * loader. Removing it could stop new videos from loading.
+             */
+            if (section.querySelector(CONTINUATION_SELECTOR)) {
+                section.classList.remove(EMPTY_SECTION_CLASS);
+                continue;
+            }
+
+            const cards = Array.from(
+                section.querySelectorAll(CARD_SELECTOR)
+            );
+
+            if (cards.length === 0) {
+                section.classList.remove(EMPTY_SECTION_CLASS);
+                continue;
+            }
+
+            const hasVisibleCard =
+                cards.some(cardIsActuallyVisible);
+
+            section.classList.toggle(
+                EMPTY_SECTION_CLASS,
+                !hasVisibleCard
+            );
+        }
+    }
+
+    function pulseInfiniteScroll() {
+        window.clearTimeout(refillTimer);
+
+        refillTimer = window.setTimeout(() => {
+            const root =
+                document.scrollingElement ||
+                document.documentElement;
+
+            if (!root) {
+                return;
+            }
+
+            const distanceFromBottom =
+                root.scrollHeight -
+                (root.scrollTop + window.innerHeight);
+
+            const nearBottom =
+                distanceFromBottom < window.innerHeight * 2;
+
+            const feedUnderfilled =
+                root.scrollHeight <= window.innerHeight * 1.5;
+
+            if (!nearBottom && !feedUnderfilled) {
+                return;
+            }
+
+            /*
+             * YouTube normally loads another batch when its continuation
+             * element reaches the viewport. Hiding cards changes the
+             * layout, so these events encourage YouTube to recalculate
+             * whether more items need to load.
+             *
+             * This does not reload the page or change the scroll position.
+             */
+            window.dispatchEvent(new Event('scroll'));
+
+            document.dispatchEvent(
+                new Event('scroll', {
+                    bubbles: true
+                })
+            );
+
+            root.dispatchEvent(
+                new Event('scroll', {
+                    bubbles: true
+                })
+            );
+
+            window.requestAnimationFrame(() => {
+                window.dispatchEvent(new Event('resize'));
+                scheduleScan(250);
+            });
+        }, 120);
+    }
+
+    function scan() {
+        scanTimer = 0;
+
         injectStyle();
-        hideSectionsByHeading();
-        hideShortsLinkContainers();
-        hidePlayablesLinkContainers();
-    }
 
-    /*
-     * Debounce repeated page changes so infinite scrolling does not
-     * cause an excessive number of full-page scans.
-     */
-    let cleanupTimer = 0;
+        const newlyHidden = updateCards();
 
-    function scheduleCleanup() {
-        if (cleanupTimer) {
-            return;
+        updateEmptySections();
+
+        if (newlyHidden > 0) {
+            pulseInfiniteScroll();
         }
-
-        cleanupTimer = window.setTimeout(() => {
-            cleanupTimer = 0;
-            cleanPage();
-        }, 75);
     }
 
-    injectStyle();
-    scheduleCleanup();
+    function scheduleScan(delay = 90) {
+        window.clearTimeout(scanTimer);
 
-    /*
-     * YouTube loads feed items dynamically and uses client-side
-     * navigation, so continue cleaning content added after page load.
-     */
-    const observer = new MutationObserver(scheduleCleanup);
+        scanTimer = window.setTimeout(
+            scan,
+            delay
+        );
+    }
 
-    function beginObserving() {
+    function startObserver() {
         if (!document.documentElement) {
-            setTimeout(beginObserving, 25);
+            window.setTimeout(startObserver, 20);
             return;
         }
+
+        if (observer) {
+            observer.disconnect();
+        }
+
+        observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                if (
+                    mutation.type === 'childList' ||
+                    mutation.attributeName === 'style' ||
+                    mutation.attributeName === 'aria-valuenow' ||
+                    mutation.attributeName === 'data-progress' ||
+                    mutation.attributeName === 'data-percent'
+                ) {
+                    scheduleScan();
+                    return;
+                }
+            }
+        });
 
         observer.observe(document.documentElement, {
             childList: true,
             subtree: true,
             attributes: true,
             attributeFilter: [
-                'href',
-                'aria-label',
-                'tab-title',
-                'data-style',
-                'data-pivot-id',
-                'is-playables'
+                'style',
+                'aria-valuenow',
+                'data-progress',
+                'data-percent'
             ]
         });
 
-        cleanPage();
+        scheduleScan(0);
     }
 
-    beginObserving();
+    injectStyle();
+    startObserver();
 
-    /* Handle navigation that occurs without a full browser refresh. */
+    /*
+     * YouTube switches between pages without performing a full browser
+     * reload, so listen for its internal navigation events.
+     */
     document.addEventListener(
         'yt-navigate-finish',
-        scheduleCleanup,
+        () => scheduleScan(50),
+        true
+    );
+
+    document.addEventListener(
+        'yt-page-data-updated',
+        () => scheduleScan(50),
         true
     );
 
     window.addEventListener(
         'popstate',
-        scheduleCleanup,
+        () => scheduleScan(50),
         true
+    );
+
+    window.addEventListener(
+        'pageshow',
+        () => scheduleScan(50),
+        true
+    );
+
+    window.addEventListener(
+        'resize',
+        () => scheduleScan(150),
+        true
+    );
+
+    document.addEventListener(
+        'visibilitychange',
+        () => {
+            if (!document.hidden) {
+                scheduleScan(50);
+            }
+        }
     );
 })();
