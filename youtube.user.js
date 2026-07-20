@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Hide 100% Watched YouTube Videos Except History & Likes
+// @name         Hide 100% Watched YouTube Videos Except History, Likes & Library
 // @namespace    https://coopernorman.com/userscripts
-// @version      4.0.0
-// @description  Hides fully watched videos everywhere on YouTube mobile except Watch History and the Liked Videos playlist.
+// @version      4.1.0
+// @description  Hides fully watched videos throughout YouTube except History, Liked Videos, and the Library screen.
 // @match        https://m.youtube.com/*
 // @match        https://www.youtube.com/*
 // @grant        none
@@ -24,8 +24,8 @@
         'cn-hide-fully-watched-video-style';
 
     /*
-     * This is the exact progress-bar class found in your exported
-     * iPhone YouTube DOM.
+     * Exact mobile progress-bar class found in the exported iPhone DOM,
+     * plus fallbacks for other YouTube layouts.
      */
     const PROGRESS_SELECTOR = [
         '.YtmThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress',
@@ -81,7 +81,16 @@
     let previousUrl = location.href;
 
     /*
-     * Return true on pages where watched videos must remain visible.
+     * Completed videos remain visible on:
+     *
+     * 1. History
+     *    /feed/history
+     *
+     * 2. Liked Videos
+     *    /playlist?list=LL
+     *
+     * 3. Library / You screen
+     *    /feed/library
      */
     function isExemptPage() {
         const path =
@@ -90,27 +99,21 @@
         const parameters =
             new URLSearchParams(location.search);
 
-        /*
-         * Watch History:
-         *
-         * https://m.youtube.com/feed/history
-         */
         const isHistory =
             path === '/feed/history';
 
-        /*
-         * Liked Videos:
-         *
-         * https://m.youtube.com/playlist?list=LL
-         *
-         * Only LL is exempted. Other playlists, including Watch Later,
-         * continue hiding completed videos.
-         */
+        const isLibrary =
+            path === '/feed/library';
+
         const isLikedVideos =
             path === '/playlist' &&
             parameters.get('list') === 'LL';
 
-        return isHistory || isLikedVideos;
+        return (
+            isHistory ||
+            isLibrary ||
+            isLikedVideos
+        );
     }
 
     function filteringIsEnabled() {
@@ -128,10 +131,10 @@
         style.id = STYLE_ID;
 
         /*
-         * Every hiding rule requires ENABLED_ROOT_CLASS.
+         * All hiding rules require ENABLED_ROOT_CLASS.
          *
-         * Removing that class immediately disables the filter on
-         * History and Liked Videos, including the direct CSS rules.
+         * Removing that class immediately disables hiding on History,
+         * Liked Videos, and Library.
          */
         style.textContent = `
             html.${ENABLED_ROOT_CLASS}
@@ -177,10 +180,10 @@
     }
 
     /*
-     * Restore every card hidden by this script.
+     * Restore every card previously hidden by this script.
      *
-     * This is important because YouTube can reuse existing DOM elements
-     * when moving between pages without doing a full browser refresh.
+     * Mobile YouTube often changes screens without performing a full
+     * page reload, so old DOM elements may still exist temporarily.
      */
     function restoreAllHiddenCards() {
         document
@@ -286,7 +289,7 @@
 
     function readProgressPercent(progress) {
         /*
-         * Exact structure found in your mobile DOM:
+         * Exact mobile structure:
          *
          * style="width: 100%;"
          */
@@ -465,8 +468,8 @@
         );
 
         /*
-         * Work outward from every progress element in case YouTube
-         * introduces another outer card renderer.
+         * Work outward from each progress element in case YouTube
+         * introduces a different outer renderer.
          */
         const progressElements =
             document.querySelectorAll(
@@ -507,8 +510,8 @@
                 isHidden
             ) {
                 /*
-                 * YouTube sometimes reuses a card element for another
-                 * video during navigation.
+                 * YouTube may reuse an existing card element for a
+                 * different video.
                  */
                 card.classList.remove(
                     HIDDEN_CLASS
@@ -531,8 +534,8 @@
         refillTimer =
             window.setTimeout(() => {
                 /*
-                 * Recheck because the user may have navigated to History
-                 * or Liked Videos while this timer was waiting.
+                 * Recheck in case navigation occurred while this timer
+                 * was waiting.
                  */
                 if (!filteringIsEnabled()) {
                     return;
@@ -658,8 +661,8 @@
         refillAttempts = 0;
 
         /*
-         * Update the root class immediately so CSS stops hiding cards
-         * as soon as History or Liked Videos opens.
+         * Update immediately so cards become visible as soon as the
+         * Library, History, or Liked Videos page opens.
          */
         updateFilteringState();
         scheduleScan(30);
@@ -682,10 +685,6 @@
         const observer =
             new MutationObserver(
                 (mutations) => {
-                    /*
-                     * YouTube may change the URL through its internal
-                     * navigation without performing a normal page load.
-                     */
                     if (location.href !== previousUrl) {
                         handleNavigation();
                         return;
@@ -729,8 +728,8 @@
         scheduleScan(0);
 
         /*
-         * Backup URL watcher for mobile YouTube navigation experiments
-         * that do not dispatch the expected navigation events.
+         * Backup route watcher for mobile YouTube navigation that does
+         * not fire the expected events.
          */
         window.setInterval(() => {
             if (location.href !== previousUrl) {
