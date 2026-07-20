@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Hide 100% Watched YouTube Videos - iPhone Safari
+// @name         Hide 100% Watched YouTube Videos Except History & Likes
 // @namespace    https://coopernorman.com/userscripts
-// @version      3.0.0
-// @description  Hides fully watched videos throughout YouTube's mobile web interface and nudges infinite scrolling to load replacements.
+// @version      4.0.0
+// @description  Hides fully watched videos everywhere on YouTube mobile except Watch History and the Liked Videos playlist.
 // @match        https://m.youtube.com/*
 // @match        https://www.youtube.com/*
 // @grant        none
@@ -12,21 +12,20 @@
 (function () {
     'use strict';
 
-    /*
-     * YouTube uses exactly 100% in the exported mobile DOM.
-     * A tiny tolerance handles possible rendering/rounding variations.
-     */
     const COMPLETE_PERCENT = 99.9;
 
-    const HIDDEN_CLASS = 'cn-hide-fully-watched-video';
-    const STYLE_ID = 'cn-hide-fully-watched-video-style';
+    const HIDDEN_CLASS =
+        'cn-hide-fully-watched-video';
+
+    const ENABLED_ROOT_CLASS =
+        'cn-hide-watched-filter-enabled';
+
+    const STYLE_ID =
+        'cn-hide-fully-watched-video-style';
 
     /*
-     * The first selector is the exact progress element found in your
-     * exported iPhone Safari HTML.
-     *
-     * The remaining selectors are fallbacks for other YouTube layouts
-     * and future A/B-tested progress-bar renderers.
+     * This is the exact progress-bar class found in your exported
+     * iPhone YouTube DOM.
      */
     const PROGRESS_SELECTOR = [
         '.YtmThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress',
@@ -43,15 +42,10 @@
         '[role="progressbar"][aria-valuenow]'
     ].join(',');
 
-    /*
-     * Ordered from the complete outer video card to smaller fallback
-     * containers.
-     *
-     * Selecting ytm-rich-item-renderer first removes the thumbnail,
-     * title, channel information, menu button, margins, and reserved
-     * feed space.
-     */
     const CARD_SELECTORS = [
+        /*
+         * Mobile YouTube cards.
+         */
         'ytm-rich-item-renderer',
         'ytm-video-with-context-renderer',
         'ytm-compact-video-renderer',
@@ -62,8 +56,7 @@
         'yt-lockup-view-model',
 
         /*
-         * Desktop-layout fallbacks in case Safari is displaying
-         * www.youtube.com rather than the mobile renderer.
+         * Desktop-layout fallbacks.
          */
         'ytd-rich-item-renderer',
         'ytd-video-renderer',
@@ -85,6 +78,44 @@
     let scanTimer = 0;
     let refillTimer = 0;
     let refillAttempts = 0;
+    let previousUrl = location.href;
+
+    /*
+     * Return true on pages where watched videos must remain visible.
+     */
+    function isExemptPage() {
+        const path =
+            location.pathname.replace(/\/+$/, '') || '/';
+
+        const parameters =
+            new URLSearchParams(location.search);
+
+        /*
+         * Watch History:
+         *
+         * https://m.youtube.com/feed/history
+         */
+        const isHistory =
+            path === '/feed/history';
+
+        /*
+         * Liked Videos:
+         *
+         * https://m.youtube.com/playlist?list=LL
+         *
+         * Only LL is exempted. Other playlists, including Watch Later,
+         * continue hiding completed videos.
+         */
+        const isLikedVideos =
+            path === '/playlist' &&
+            parameters.get('list') === 'LL';
+
+        return isHistory || isLikedVideos;
+    }
+
+    function filteringIsEnabled() {
+        return !isExemptPage();
+    }
 
     function injectStyle() {
         if (document.getElementById(STYLE_ID)) {
@@ -97,29 +128,33 @@
         style.id = STYLE_ID;
 
         /*
-         * The :has() rules provide immediate hiding for the exact
-         * structure found in your exported mobile YouTube HTML.
+         * Every hiding rule requires ENABLED_ROOT_CLASS.
          *
-         * JavaScript below handles percentages such as 99.9%, other
-         * page layouts, and dynamically inserted cards.
+         * Removing that class immediately disables the filter on
+         * History and Liked Videos, including the direct CSS rules.
          */
         style.textContent = `
+            html.${ENABLED_ROOT_CLASS}
             .${HIDDEN_CLASS} {
                 display: none !important;
             }
 
+            html.${ENABLED_ROOT_CLASS}
             ytm-rich-item-renderer:has(
                 .YtmThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress[style*="width: 100%"]
             ),
 
+            html.${ENABLED_ROOT_CLASS}
             ytm-rich-item-renderer:has(
                 .YtmThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress[style*="width:100%"]
             ),
 
+            html.${ENABLED_ROOT_CLASS}
             ytm-video-with-context-renderer:has(
                 .YtmThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress[style*="width: 100%"]
             ),
 
+            html.${ENABLED_ROOT_CLASS}
             ytm-video-with-context-renderer:has(
                 .YtmThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress[style*="width:100%"]
             ) {
@@ -139,6 +174,50 @@
                 20
             );
         }
+    }
+
+    /*
+     * Restore every card hidden by this script.
+     *
+     * This is important because YouTube can reuse existing DOM elements
+     * when moving between pages without doing a full browser refresh.
+     */
+    function restoreAllHiddenCards() {
+        document
+            .querySelectorAll(
+                `.${HIDDEN_CLASS}`
+            )
+            .forEach((element) => {
+                element.classList.remove(
+                    HIDDEN_CLASS
+                );
+            });
+    }
+
+    function updateFilteringState() {
+        if (!document.documentElement) {
+            return false;
+        }
+
+        const enabled =
+            filteringIsEnabled();
+
+        document.documentElement.classList.toggle(
+            ENABLED_ROOT_CLASS,
+            enabled
+        );
+
+        if (!enabled) {
+            restoreAllHiddenCards();
+
+            refillAttempts = 0;
+
+            window.clearTimeout(
+                refillTimer
+            );
+        }
+
+        return enabled;
     }
 
     function parseNumber(value) {
@@ -168,11 +247,6 @@
             return null;
         }
 
-        /*
-         * Example:
-         *
-         * transform: scaleX(1)
-         */
         const scaleX = transform.match(
             /scaleX\(\s*(-?\d+(?:\.\d+)?)\s*\)/i
         );
@@ -190,11 +264,6 @@
             }
         }
 
-        /*
-         * Browsers can return computed transforms as:
-         *
-         * matrix(scaleX, 0, 0, scaleY, x, y)
-         */
         const matrix = transform.match(
             /^matrix\(\s*(-?\d+(?:\.\d+)?)/i
         );
@@ -217,7 +286,7 @@
 
     function readProgressPercent(progress) {
         /*
-         * Exact structure from your exported mobile DOM:
+         * Exact structure found in your mobile DOM:
          *
          * style="width: 100%;"
          */
@@ -236,10 +305,6 @@
             }
         }
 
-        /*
-         * Read the raw style attribute in case Safari does not expose
-         * the value through element.style.width.
-         */
         const styleAttribute =
             progress.getAttribute('style') || '';
 
@@ -254,20 +319,19 @@
             );
         }
 
-        /*
-         * Accessible progress-bar fallback.
-         */
-        const ariaNow = parseNumber(
-            progress.getAttribute(
-                'aria-valuenow'
-            )
-        );
+        const ariaNow =
+            parseNumber(
+                progress.getAttribute(
+                    'aria-valuenow'
+                )
+            );
 
-        const ariaMax = parseNumber(
-            progress.getAttribute(
-                'aria-valuemax'
-            )
-        );
+        const ariaMax =
+            parseNumber(
+                progress.getAttribute(
+                    'aria-valuemax'
+                )
+            );
 
         if (ariaNow !== null) {
             return (
@@ -278,10 +342,7 @@
                 : ariaNow;
         }
 
-        /*
-         * Possible data-attribute fallbacks.
-         */
-        const dataPercentValues = [
+        const attributeValues = [
             progress.getAttribute(
                 'data-progress'
             ),
@@ -293,10 +354,7 @@
             )
         ];
 
-        for (
-            const value of
-            dataPercentValues
-        ) {
+        for (const value of attributeValues) {
             const percent =
                 parseNumber(value);
 
@@ -309,9 +367,6 @@
             }
         }
 
-        /*
-         * Transform-based progress fallback.
-         */
         const transformed =
             percentageFromTransform(
                 progress.style.transform
@@ -327,8 +382,7 @@
         }
 
         /*
-         * Pixel-width fallback for layouts that do not expose a
-         * percentage directly.
+         * Pixel-width fallback.
          */
         const barRect =
             progress.getBoundingClientRect();
@@ -365,10 +419,7 @@
     }
 
     function findCard(element) {
-        for (
-            const selector of
-            CARD_SELECTORS
-        ) {
+        for (const selector of CARD_SELECTORS) {
             const card =
                 element.closest(selector);
 
@@ -386,10 +437,7 @@
                 PROGRESS_SELECTOR
             );
 
-        for (
-            const progress of
-            progressBars
-        ) {
+        for (const progress of progressBars) {
             const percent =
                 readProgressPercent(progress);
 
@@ -405,6 +453,11 @@
     }
 
     function updateCards() {
+        if (!filteringIsEnabled()) {
+            restoreAllHiddenCards();
+            return 0;
+        }
+
         const cards = new Set(
             document.querySelectorAll(
                 CARD_SELECTOR
@@ -412,19 +465,15 @@
         );
 
         /*
-         * Also work outward from progress elements. This helps if
-         * YouTube introduces another outer card element that is not
-         * included in CARD_SELECTORS.
+         * Work outward from every progress element in case YouTube
+         * introduces another outer card renderer.
          */
         const progressElements =
             document.querySelectorAll(
                 PROGRESS_SELECTOR
             );
 
-        for (
-            const progress of
-            progressElements
-        ) {
+        for (const progress of progressElements) {
             const card =
                 findCard(progress);
 
@@ -458,8 +507,8 @@
                 isHidden
             ) {
                 /*
-                 * YouTube can recycle an existing card element for a
-                 * different video while navigating or scrolling.
+                 * YouTube sometimes reuses a card element for another
+                 * video during navigation.
                  */
                 card.classList.remove(
                     HIDDEN_CLASS
@@ -471,12 +520,24 @@
     }
 
     function nudgeContinuationLoader() {
+        if (!filteringIsEnabled()) {
+            return;
+        }
+
         window.clearTimeout(
             refillTimer
         );
 
         refillTimer =
             window.setTimeout(() => {
+                /*
+                 * Recheck because the user may have navigated to History
+                 * or Liked Videos while this timer was waiting.
+                 */
+                if (!filteringIsEnabled()) {
+                    return;
+                }
+
                 const continuation =
                     document.querySelector(
                         CONTINUATION_SELECTOR
@@ -509,15 +570,6 @@
                     return;
                 }
 
-                /*
-                 * YouTube loads another batch when its continuation
-                 * element approaches the viewport.
-                 *
-                 * Hiding watched videos moves that loader upward.
-                 * These events and an imperceptible one-pixel movement
-                 * make Safari recalculate the loader without refreshing
-                 * the page or changing your location in the feed.
-                 */
                 const originalY =
                     window.scrollY;
 
@@ -556,10 +608,6 @@
                     }
                 );
 
-                /*
-                 * Allow several passes in case the next batch also
-                 * contains mostly completed videos.
-                 */
                 if (refillAttempts < 8) {
                     refillAttempts += 1;
                     scheduleScan(500);
@@ -571,6 +619,13 @@
         scanTimer = 0;
 
         injectStyle();
+
+        const enabled =
+            updateFilteringState();
+
+        if (!enabled) {
+            return;
+        }
 
         const newlyHidden =
             updateCards();
@@ -586,9 +641,7 @@
         }
     }
 
-    function scheduleScan(
-        delay = 60
-    ) {
+    function scheduleScan(delay = 60) {
         window.clearTimeout(
             scanTimer
         );
@@ -600,9 +653,16 @@
             );
     }
 
-    function resetForNavigation() {
+    function handleNavigation() {
+        previousUrl = location.href;
         refillAttempts = 0;
-        scheduleScan(40);
+
+        /*
+         * Update the root class immediately so CSS stops hiding cards
+         * as soon as History or Liked Videos opens.
+         */
+        updateFilteringState();
+        scheduleScan(30);
     }
 
     function start() {
@@ -617,21 +677,21 @@
             return;
         }
 
-        /*
-         * YouTube is a single-page application. This watches for:
-         *
-         * - Newly inserted feed cards
-         * - Infinite-scroll results
-         * - Progress percentages being updated
-         * - Navigation between Home, Subscriptions, search, and channels
-         */
+        updateFilteringState();
+
         const observer =
             new MutationObserver(
                 (mutations) => {
-                    for (
-                        const mutation of
-                        mutations
-                    ) {
+                    /*
+                     * YouTube may change the URL through its internal
+                     * navigation without performing a normal page load.
+                     */
+                    if (location.href !== previousUrl) {
+                        handleNavigation();
+                        return;
+                    }
+
+                    for (const mutation of mutations) {
                         if (
                             mutation.type ===
                                 'childList' ||
@@ -667,34 +727,47 @@
         );
 
         scheduleScan(0);
+
+        /*
+         * Backup URL watcher for mobile YouTube navigation experiments
+         * that do not dispatch the expected navigation events.
+         */
+        window.setInterval(() => {
+            if (location.href !== previousUrl) {
+                handleNavigation();
+            }
+        }, 400);
     }
 
     start();
 
-    /*
-     * YouTube navigation usually occurs without a full browser reload.
-     */
+    document.addEventListener(
+        'yt-navigate-start',
+        handleNavigation,
+        true
+    );
+
     document.addEventListener(
         'yt-navigate-finish',
-        resetForNavigation,
+        handleNavigation,
         true
     );
 
     document.addEventListener(
         'yt-page-data-updated',
-        resetForNavigation,
+        handleNavigation,
         true
     );
 
     window.addEventListener(
         'popstate',
-        resetForNavigation,
+        handleNavigation,
         true
     );
 
     window.addEventListener(
         'pageshow',
-        resetForNavigation,
+        handleNavigation,
         true
     );
 
@@ -702,7 +775,7 @@
         'visibilitychange',
         () => {
             if (!document.hidden) {
-                resetForNavigation();
+                handleNavigation();
             }
         }
     );
